@@ -456,49 +456,61 @@ if not filtered_df.empty:
                         # --- Modal de modification ---
                         if f"edit_index_{index}" in st.session_state and st.session_state[f"edit_index_{index}"]:
                             with st.modal(f"Modifier la tâche: {task['Tâche']}", key=f"modal_edit_{index}"):
-                                 st.subheader("Modifier la tâche")
+                                st.subheader("Modifier la tâche")
 
-                                 edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
-                                 edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
-                                    index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
-                                    key=f"edit_responsable_{index}")
+                                edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
 
-                                current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
+                                edit_responsable = st.selectbox(
+                                    "Responsable",
+                                    ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
+                                    index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"])
+                                    if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
+                                    key=f"edit_responsable_{index}"
+                                )
+
+                                current_date = (
+                                    task["Date limite"]
+                                    if "Date limite" in task and pd.notna(task["Date limite"])
+                                    else datetime.today().date()
+                                )
                                 edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
 
-                                edit_statut = st.selectbox("Statut", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
-                                   index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"]) 
-                                   if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
-                                   key=f"edit_statut_{index}")
+                                edit_statut = st.selectbox(
+                                    "Statut",
+                                    ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
+                                    index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"])
+                                    if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
+                                    key=f"edit_statut_{index}"
+                                )
 
                                 edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
 
                                 col1, col2 = st.columns(2)
                                 with col1:
-                                   if st.button("Confirmer la modification", type="primary", key=f"confirm_edit_{index}"):
-                                      if edit_tache.strip() == "":
-                                         st.error("Veuillez saisir une description de tâche")
-                                      else:
-                                        with st.spinner("Modification en cours..."):
-                                            updated_task = {
-                                                "Tâche": edit_tache,
-                                                "Responsable": edit_responsable,
-                                                "Date limite": str(edit_date_limite),
-                                                "Statut": edit_statut,
-                                                "Confirmé": "Oui" if edit_confirme else "Non"
-                                            }
-                                            success, message = update_task(task['id'], updated_task)
-                                            if success:
-                                                st.success("✅ " + message)
-                                                st.session_state[f"edit_index_{index}"] = False
-                                                st.cache_data.clear()
-                                                st.rerun()
-                                            else:
-                                                st.error("❌ " + message)
+                                    if st.button("Confirmer la modification", type="primary", key=f"confirm_edit_{index}"):
+                                        if edit_tache.strip() == "":
+                                            st.error("Veuillez saisir une description de tâche")
+                                        else:
+                                            with st.spinner("Modification en cours..."):
+                                                updated_task = {
+                                                    "Tâche": edit_tache,
+                                                    "Responsable": edit_responsable,
+                                                    "Date limite": str(edit_date_limite),
+                                                    "Statut": edit_statut,
+                                                    "Confirmé": "Oui" if edit_confirme else "Non"
+                                                }
+                                                success, message = update_task(task['id'], updated_task)
+                                                if success:
+                                                    st.success("✅ " + message)
+                                                    st.session_state[f"edit_index_{index}"] = False
+                                                    st.cache_data.clear()
+                                                    st.rerun()
+                                                else:
+                                                    st.error("❌ " + message)
                                 with col2:
-                                   if st.button("Annuler", key=f"cancel_edit_{index}"):
-                                      st.session_state[f"edit_index_{index}"] = False
-                                      st.rerun()
+                                    if st.button("Annuler", key=f"cancel_edit_{index}"):
+                                        st.session_state[f"edit_index_{index}"] = False
+                                        st.rerun()
 
                         # --- Modal de suppression ---
                         if f"delete_index_{index}" in st.session_state and st.session_state[f"delete_index_{index}"]:
