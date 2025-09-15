@@ -338,6 +338,28 @@ st.markdown("""
             min-width: 250px; /* largeur mini de chaque colonne */
         }
     }
+        /* Empêcher la coupure des mots dans les expanders */
+    .stExpander .stMarkdown, 
+    .stExpander .stText, 
+    .stExpander .stDataFrame,
+    .stExpander .stTextInput,
+    .stExpander .stDateInput,
+    .stExpander .stSelectbox {
+        white-space: nowrap !important;   /* pas de retour auto */
+        overflow: hidden !important;      /* cache ce qui dépasse */
+        text-overflow: ellipsis !important; /* ajoute "..." */
+    }
+
+    /* Autoriser le scroll horizontal dans les expanders */
+    .stExpander .stMarkdown,
+    .stExpander .stText {
+        overflow-x: auto !important;
+    }
+
+    /* Ajuster largeur des expanders pour éviter compression */
+    .stExpander {
+        max-width: 100% !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
