@@ -236,16 +236,7 @@ with st.sidebar:
     
     st.subheader("Configuration Airtable")
     
-    # Formulaire pour configurer Airtable
-    with st.form("airtable_config"):
-        api_key = st.text_input("Clé API Airtable", value=AIRTABLE_API_KEY, type="password")
-        base_id = st.text_input("ID de la base Airtable", value=AIRTABLE_BASE_ID)
-        
-        if st.form_submit_button("Sauvegarder la configuration"):
-            st.success("Configuration sauvegardée (simulation). En production, utilisez les secrets Streamlit.")
-            st.rerun()
-    
-    st.markdown("---")
+   
     
     # Bouton pour actualiser les données
     if st.button("🔄 Actualiser les données"):
