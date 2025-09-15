@@ -157,169 +157,297 @@ def get_status_class(status):
 # Charger les données
 df = load_data()
 
-# --- CSS personnalisé ---
+# --- CSS personnalisé avec responsive design ---
 st.markdown("""
 <style>
+    /* Styles de base */
     .main-header {
-        font-size: 3rem;
+        font-size: 2.5rem;
         color: #1E3A8A;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
+    
     .section-header {
         color: #1E3A8A;
         border-bottom: 2px solid #1E3A8A;
         padding-bottom: 0.5rem;
-        margin-top: 2rem;
+        margin-top: 1.5rem;
+        font-size: 1.5rem;
     }
-    .tasks-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    
+    /* Grille responsive pour le tableau Kanban */
+    .kanban-container {
+        display: flex;
+        overflow-x: auto;
         gap: 1rem;
+        padding-bottom: 1rem;
         margin-bottom: 2rem;
     }
+    
+    .kanban-column {
+        min-width: 280px;
+        flex: 1;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .kanban-column h3 {
+        margin-top: 0;
+        font-size: 1.2rem;
+        color: #1E3A8A;
+        text-align: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
     .task-card {
         padding: 1rem;
         border-radius: 0.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         background-color: white;
+        margin-bottom: 1rem;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        min-height: 220px;
     }
+    
     .task-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
+    
     .task-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.5rem;
         color: #1E3A8A;
         line-height: 1.3;
     }
+    
     .task-detail {
-        font-size: 0.9rem;
-        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
         display: flex;
         align-items: center;
     }
+    
     .task-detail-icon {
         margin-right: 0.5rem;
         opacity: 0.7;
-        width: 20px;
+        width: 16px;
         text-align: center;
     }
+    
     .task-status-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin: 0.8rem 0;
+        margin: 0.5rem 0;
     }
+    
+    /* Styles des statuts */
     .status-a-faire {
         background-color: #E5E7EB;
         color: #374151;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .status-en-cours {
         background-color: #FEF3C7;
         color: #92400E;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .status-en-revue {
         background-color: #DBEAFE;
         color: #1E40AF;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .status-approuve {
         background-color: #D1FAE5;
         color: #065F46;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .status-rejete {
         background-color: #FEE2E2;
         color: #991B1B;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .status-termine {
         background-color: #D1FAE5;
         color: #065F46;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .status-archive {
         background-color: #E5E7EB;
         color: #374151;
-        padding: 0.25rem 0.5rem;
+        padding: 0.2rem 0.4rem;
         border-radius: 0.25rem;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .confirmed {
         color: #065F46;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .not-confirmed {
         color: #991B1B;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
+    
     .days-remaining {
         font-weight: 600;
-        font-size: 0.8rem;
-        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        padding: 0.15rem 0.4rem;
         border-radius: 0.5rem;
     }
+    
     .days-remaining.urgent {
         background-color: #FEE2E2;
         color: #DC2626;
     }
+    
     .days-remaining.warning {
         background-color: #FEF3C7;
         color: #D97706;
     }
+    
     .days-remaining.normal {
         background-color: #D1FAE5;
         color: #059669;
     }
+    
     .task-actions {
         display: flex;
         gap: 0.5rem;
-        margin-top: auto;
-        padding-top: 0.8rem;
+        margin-top: 0.5rem;
     }
+    
     .task-actions button {
         flex: 1;
-        padding: 0.4rem;
-        font-size: 0.8rem;
+        padding: 0.3rem;
+        font-size: 0.75rem;
     }
-    .urgent {
-        border-left: 4px solid #DC2626;
+    
+    /* Media queries pour le responsive design */
+    @media (max-width: 1200px) {
+        .main-header {
+            font-size: 2rem;
+        }
+        
+        .section-header {
+            font-size: 1.3rem;
+        }
     }
-    .due-soon {
-        border-left: 4px solid #F59E0B;
+    
+    @media (max-width: 992px) {
+        .kanban-column {
+            min-width: 250px;
+        }
+        
+        .main-header {
+            font-size: 1.8rem;
+        }
     }
-    .on-track {
-        border-left: 4px solid #10B981;
+    
+    @media (max-width: 768px) {
+        .main-header {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .section-header {
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
+        
+        .kanban-column {
+            min-width: 220px;
+            padding: 0.75rem;
+        }
+        
+        .kanban-column h3 {
+            font-size: 1.1rem;
+        }
+        
+        .task-card {
+            padding: 0.75rem;
+        }
+        
+        .task-title {
+            font-size: 0.9rem;
+        }
+        
+        .task-detail {
+            font-size: 0.8rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .main-header {
+            font-size: 1.3rem;
+        }
+        
+        .section-header {
+            font-size: 1.1rem;
+        }
+        
+        .kanban-column {
+            min-width: 200px;
+            padding: 0.5rem;
+        }
+        
+        .kanban-column h3 {
+            font-size: 1rem;
+        }
+        
+        .task-card {
+            padding: 0.5rem;
+        }
+        
+        .task-title {
+            font-size: 0.85rem;
+        }
+        
+        .task-detail {
+            font-size: 0.75rem;
+        }
+        
+        .task-actions {
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        
+        .task-actions button {
+            width: 100%;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -400,115 +528,137 @@ if not df.empty:
 
 if not filtered_df.empty:
     st.subheader("Kanban des tâches")
-
+    
+    # Utiliser un conteneur avec défilement horizontal pour les petits écrans
+    st.markdown('<div class="kanban-container">', unsafe_allow_html=True)
+    
     statuses = ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"]
-    cols = st.columns(len(statuses))
-
-    for i, status in enumerate(statuses):
-        with cols[i]:
-            st.markdown(f"### {status}")
-            tasks_status = filtered_df[filtered_df["Statut"] == status]
-
-            if not tasks_status.empty:
-                for index, task in tasks_status.iterrows():
-                    # Déterminer confirmation
-                    confirm_class = "✅ Oui" if task["Confirmé"] == "Oui" else "❌ Non"
-
-                    # Calcul jours restants
-                    days_until_due = "N/A"
-                    if "Date limite" in task and pd.notna(task["Date limite"]):
-                        days_until_due = (task["Date limite"] - today).days
-
-                    # Bloc d'affichage (expander par tâche)
-                    with st.expander(f"{task['Tâche']}"):
-                        st.write(f"👤 Responsable : {task['Responsable']}")
-                        if pd.notna(task["Date limite"]):
-                            st.write(f"📅 Échéance : {task['Date limite']} ({days_until_due} jours restants)")
-                        st.write(f"✅ Confirmé : {confirm_class}")
-
-                        # Boutons d'action
+    
+    for status in statuses:
+        st.markdown(f'<div class="kanban-column">', unsafe_allow_html=True)
+        st.markdown(f'<h3>{status}</h3>', unsafe_allow_html=True)
+        
+        tasks_status = filtered_df[filtered_df["Statut"] == status]
+        
+        if not tasks_status.empty:
+            for index, task in tasks_status.iterrows():
+                # Déterminer confirmation
+                confirm_class = "✅ Oui" if task["Confirmé"] == "Oui" else "❌ Non"
+                
+                # Calcul jours restants
+                days_until_due = "N/A"
+                days_class = ""
+                if "Date limite" in task and pd.notna(task["Date limite"]):
+                    days_until_due = (task["Date limite"] - today).days
+                    if days_until_due < 0:
+                        days_class = "urgent"
+                    elif days_until_due <= 3:
+                        days_class = "warning"
+                    else:
+                        days_class = "normal"
+                
+                # Afficher la carte de tâche
+                st.markdown('<div class="task-card">', unsafe_allow_html=True)
+                st.markdown(f'<div class="task-title">{task["Tâche"]}</div>', unsafe_allow_html=True)
+                
+                st.markdown(f'<div class="task-detail"><span class="task-detail-icon">👤</span> {task["Responsable"]}</div>', unsafe_allow_html=True)
+                
+                if pd.notna(task["Date limite"]):
+                    st.markdown(f'<div class="task-detail"><span class="task-detail-icon">📅</span> {task["Date limite"]} <span class="days-remaining {days_class}">{days_until_due} jours</span></div>', unsafe_allow_html=True)
+                
+                st.markdown(f'<div class="task-detail"><span class="task-detail-icon">✅</span> {confirm_class}</div>', unsafe_allow_html=True)
+                
+                st.markdown(f'<div class="task-status-row"><span class="{get_status_class(task["Statut"])}">{task["Statut"]}</span></div>', unsafe_allow_html=True)
+                
+                # Boutons d'action
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button(f"✏️", key=f"edit_{index}", help="Modifier la tâche"):
+                        st.session_state[f"edit_index_{index}"] = True
+                with col2:
+                    if st.button(f"🗑️", key=f"delete_{index}", help="Supprimer la tâche"):
+                        st.session_state[f"delete_index_{index}"] = True
+                
+                st.markdown('</div>', unsafe_allow_html=True)  # Fin de task-card
+                
+                # --- Modal de modification ---
+                if f"edit_index_{index}" in st.session_state and st.session_state[f"edit_index_{index}"]:
+                    with st.form(f"edit_form_{index}"):
+                        st.subheader("Modifier la tâche")
+                        
+                        edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
+                        edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
+                            index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
+                            key=f"edit_responsable_{index}")
+                        
+                        current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
+                        edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
+                        
+                        edit_statut = st.selectbox("Statut", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
+                            index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"]) 
+                            if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
+                            key=f"edit_statut_{index}")
+                        
+                        edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
+                        
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button(f"✏️ Modifier", key=f"edit_{index}"):
-                                st.session_state[f"edit_index_{index}"] = True
-                        with col2:
-                            if st.button(f"🗑️ Supprimer", key=f"delete_{index}"):
-                                st.session_state[f"delete_index_{index}"] = True
-
-                        # --- Modal de modification ---
-                        if f"edit_index_{index}" in st.session_state and st.session_state[f"edit_index_{index}"]:
-                            with st.form(f"edit_form_{index}"):
-                                st.subheader("Modifier la tâche")
-
-                                edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
-                                edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
-                                    index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
-                                    key=f"edit_responsable_{index}")
-
-                                current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
-                                edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
-
-                                edit_statut = st.selectbox("Statut", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
-                                    index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"]) 
-                                    if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
-                                    key=f"edit_statut_{index}")
-
-                                edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
-
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    if st.form_submit_button("Confirmer la modification", type="primary"):
-                                        if edit_tache.strip() == "":
-                                            st.error("Veuillez saisir une description de tâche")
-                                        else:
-                                            with st.spinner("Modification en cours..."):
-                                                time.sleep(1)
-                                                updated_task = {
-                                                    "Tâche": edit_tache,
-                                                    "Responsable": edit_responsable,
-                                                    "Date limite": str(edit_date_limite),
-                                                    "Statut": edit_statut,
-                                                    "Confirmé": "Oui" if edit_confirme else "Non"
-                                                }
-                                                success, message = update_task(task['id'], updated_task)
-                                                if success:
-                                                    st.success("✅ " + message)
-                                                    st.session_state[f"edit_index_{index}"] = False
-                                                    st.cache_data.clear()
-                                                    time.sleep(1)
-                                                    st.rerun()
-                                                else:
-                                                    st.error("❌ " + message)
-                                with col2:
-                                    if st.form_submit_button("Annuler"):
-                                        st.session_state[f"edit_index_{index}"] = False
-                                        st.rerun()
-
-                        # --- Modal de suppression ---
-                        if f"delete_index_{index}" in st.session_state and st.session_state[f"delete_index_{index}"]:
-                            st.subheader("Confirmer la suppression")
-                            st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}' ? Cette action est irréversible.")
-
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
-                                    with st.spinner("Suppression en cours..."):
+                            if st.form_submit_button("Confirmer", type="primary"):
+                                if edit_tache.strip() == "":
+                                    st.error("Veuillez saisir une description de tâche")
+                                else:
+                                    with st.spinner("Modification en cours..."):
                                         time.sleep(1)
-                                        success, message = delete_task(task['id'])
+                                        updated_task = {
+                                            "Tâche": edit_tache,
+                                            "Responsable": edit_responsable,
+                                            "Date limite": str(edit_date_limite),
+                                            "Statut": edit_statut,
+                                            "Confirmé": "Oui" if edit_confirme else "Non"
+                                        }
+                                        success, message = update_task(task['id'], updated_task)
                                         if success:
                                             st.success("✅ " + message)
-                                            st.session_state[f"delete_index_{index}"] = False
+                                            st.session_state[f"edit_index_{index}"] = False
                                             st.cache_data.clear()
                                             time.sleep(1)
                                             st.rerun()
                                         else:
                                             st.error("❌ " + message)
-                            with col2:
-                                if st.button("Annuler", key=f"cancel_delete_{index}"):
+                        with col2:
+                            if st.form_submit_button("Annuler"):
+                                st.session_state[f"edit_index_{index}"] = False
+                                st.rerun()
+                
+                # --- Modal de suppression ---
+                if f"delete_index_{index}" in st.session_state and st.session_state[f"delete_index_{index}"]:
+                    st.subheader("Confirmer la suppression")
+                    st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}' ? Cette action est irréversible.")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
+                            with st.spinner("Suppression en cours..."):
+                                time.sleep(1)
+                                success, message = delete_task(task['id'])
+                                if success:
+                                    st.success("✅ " + message)
                                     st.session_state[f"delete_index_{index}"] = False
+                                    st.cache_data.clear()
+                                    time.sleep(1)
                                     st.rerun()
-            else:
-                st.info("Aucune tâche")
+                                else:
+                                    st.error("❌ " + message)
+                    with col2:
+                        if st.button("Annuler", key=f"cancel_delete_{index}"):
+                            st.session_state[f"delete_index_{index}"] = False
+                            st.rerun()
+        else:
+            st.info("Aucune tâche")
+        
+        st.markdown('</div>', unsafe_allow_html=True)  # Fin de kanban-column
+    
+    st.markdown('</div>', unsafe_allow_html=True)  # Fin de kanban-container
 else:
     st.info("Aucune tâche ne correspond aux filtres sélectionnés")
 
