@@ -358,44 +358,109 @@ with st.sidebar:
             st.rerun()
 
     # --- Section Filtres (compact mode) ---
-    with st.expander("🎯 Filtres", expanded=True):
-        # Responsable avec radio (compact)
-        all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
-        selected_responsible = st.radio("👤 Responsable", all_responsibles, horizontal=False)
+with st.sidebar:
+    # --- En-tête ---
+    st.markdown("<h1 style='text-align: center; color:#1E3A8A;'>🌐 ANCU</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:0.9rem; color:gray;'>Gestion des tâches</p>", unsafe_allow_html=True)
+    st.markdown("---")
 
-        # Statut avec radio (compact)
+    # --- Section Configuration ---
+    with st.expander("⚙️ Configuration Airtable", expanded=False):
+        if st.button("🔄 Actualiser les données"):
+            st.cache_data.clear()
+            df = load_data()
+            st.rerun()
+
+    # --- Section Filtres avancés ---
+    with st.expander("🎯 Filtres & Recherche", expanded=True):
+        # Recherche par mot-clé
+        search_term = st.text_input("🔎 Rechercher une tâche", placeholder="Titre ou mot-clé...")
+        if search_term and not df.empty:
+            df = df[df["Tâche"].str.contains(search_term, case=False, na=False)]
+
+        # Multi-sélection des responsables
+        all_responsibles = sorted(df["Responsable"].dropna().unique().tolist()) if not df.empty and "Responsable" in df.columns else []
+        selected_responsibles = st.multiselect("👥 Responsables", ["Tous"] + all_responsibles, default="Tous")
+
+        if "Tous" not in selected_responsibles and selected_responsibles:
+            df = df[df["Responsable"].isin(selected_responsibles)]
+
+        # Statut compact
         all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
         selected_status = st.radio("📌 Statut", all_statuses, horizontal=False)
+        if selected_status != "Tous":
+            df = df[df["Statut"] == selected_status]
 
-        # Filtre de date avec select_slider (compact + visuel)
+        # Filtre échéance
         date_filter = st.select_slider("📅 Échéance", options=["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"], value="Toutes")
+        today = datetime.today().date()
+        if "Date limite" in df.columns and not df.empty:
+            if date_filter == "Cette semaine":
+                df = df[df["Date limite"] <= today + pd.Timedelta(days=7)]
+            elif date_filter == "Cette quinzaine":
+                df = df[df["Date limite"] <= today + pd.Timedelta(days=14)]
+            elif date_filter == "Ce mois":
+                df = df[df["Date limite"] <= today + pd.Timedelta(days=30)]
 
-    # --- Section Statistiques avec badges et progress bar ---
+    # --- Section Statistiques ---
     with st.expander("📊 Statistiques", expanded=True):
         if not df.empty:
             total_tasks = len(df)
-            completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
-            confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
+            completed_tasks = len(df[df["Statut"] == "Terminé"])
+            confirmed_tasks = len(df[df["Confirmé"] == "Oui"])
 
-            # --- Badges dynamiques ---
-            urgent_tasks = len(df[(df["Date limite"] < datetime.today().date()) & (df["Statut"] != "Terminé")])
-            due_soon_tasks = len(df[(df["Date limite"] >= datetime.today().date()) & 
-                                    (df["Date limite"] <= datetime.today().date() + pd.Timedelta(days=3)) & 
+            urgent_tasks = len(df[(df["Date limite"] < today) & (df["Statut"] != "Terminé")])
+            due_soon_tasks = len(df[(df["Date limite"] >= today) & 
+                                    (df["Date limite"] <= today + pd.Timedelta(days=3)) & 
                                     (df["Statut"] != "Terminé")])
+            this_week_tasks = len(df[(df["Date limite"] >= today) & (df["Date limite"] <= today + pd.Timedelta(days=7))])
+            this_month_tasks = len(df[(df["Date limite"] >= today) & (df["Date limite"] <= today + pd.Timedelta(days=30))])
 
+            # Vue rapide par priorité
             st.markdown(f"🔴 **Urgentes** : {urgent_tasks}")
-            st.markdown(f"🟡 **À échéance proche** : {due_soon_tasks}")
+            st.markdown(f"🟡 **Échéance proche (3j)** : {due_soon_tasks}")
+            st.markdown(f"🗓️ **Cette semaine** : {this_week_tasks}")
+            st.markdown(f"📆 **Ce mois** : {this_month_tasks}")
             st.markdown(f"🟢 **Terminées** : {completed_tasks}")
 
-            # --- Progress bar de complétion ---
+            # Progress bar
             completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
             st.progress(completion_rate / 100)
             st.caption(f"Taux de complétion : {completion_rate}%")
 
-            # --- Autre info ---
             st.metric("🔒 Tâches confirmées", f"{confirmed_tasks}/{total_tasks}")
         else:
             st.info("Aucune tâche à afficher")
+
+    # --- Section Export ---
+    with st.expander("📥 Export", expanded=False):
+        if not df.empty:
+            st.download_button("📥 Exporter CSV", df.to_csv(index=False).encode("utf-8"), "tasks.csv", "text/csv")
+            st.download_button("📊 Exporter Excel", df.to_excel("tasks.xlsx", index=False, engine="openpyxl"), "tasks.xlsx")
+
+    # --- Section Ajout rapide ---
+    with st.expander("➕ Créer une tâche rapide", expanded=False):
+        quick_task = st.text_input("Nouvelle tâche", placeholder="Ex: Envoyer le rapport")
+        quick_responsable = st.selectbox("👤 Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"])
+        if st.button("✅ Ajouter"):
+            if quick_task.strip() != "":
+                new_task = {
+                    "Tâche": quick_task,
+                    "Responsable": quick_responsable,
+                    "Date limite": str(today),
+                    "Statut": "À faire",
+                    "Confirmé": "Non"
+                }
+                success, message = create_task(new_task)
+                if success:
+                    st.success("✅ " + message)
+                    st.cache_data.clear()
+                    st.rerun()
+                else:
+                    st.error("❌ " + message)
+            else:
+                st.warning("Veuillez entrer une description")
+
 
 # --- Titre principal ---
 st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_allow_html=True)
