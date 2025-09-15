@@ -159,49 +159,101 @@ st.markdown("""
         padding-bottom: 0.5rem;
         margin-top: 2rem;
     }
+    .tasks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
     .task-card {
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
+        padding: 1.2rem;
+        border-radius: 0.8rem;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 0;
         background-color: white;
         position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    .task-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+        line-height: 1.3;
+        color: #1E3A8A;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .task-detail {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    .task-detail-icon {
+        margin-right: 0.5rem;
+        opacity: 0.7;
+    }
+    .task-status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.8rem;
     }
     .status-fini {
         background-color: #D1FAE5;
         color: #065F46;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: bold;
+        padding: 0.3rem 0.6rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        font-size: 0.8rem;
     }
     .status-pas-fini {
         background-color: #FEE2E2;
         color: #991B1B;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: bold;
+        padding: 0.3rem 0.6rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        font-size: 0.8rem;
     }
     .status-en-cours {
         background-color: #FEF3C7;
         color: #92400E;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: bold;
+        padding: 0.3rem 0.6rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        font-size: 0.8rem;
     }
     .status-bloque {
         background-color: #E5E7EB;
         color: #374151;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: bold;
+        padding: 0.3rem 0.6rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        font-size: 0.8rem;
     }
     .confirmed {
         color: #065F46;
-        font-weight: bold;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
     }
     .not-confirmed {
         color: #991B1B;
-        font-weight: bold;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
     }
     .metric-card {
         background-color: #F3F4F6;
@@ -226,8 +278,28 @@ st.markdown("""
         gap: 0.5rem;
         margin-top: 1rem;
     }
+    .days-remaining {
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.8rem;
+        background-color: #F3F4F6;
+    }
+    .days-remaining.urgent {
+        background-color: #FEE2E2;
+        color: #DC2626;
+    }
+    .days-remaining.warning {
+        background-color: #FEF3C7;
+        color: #D97706;
+    }
+    .days-remaining.normal {
+        background-color: #D1FAE5;
+        color: #059669;
+    }
 </style>
 """, unsafe_allow_html=True)
+
 
 # --- Configuration Airtable dans la sidebar ---
 with st.sidebar:
@@ -306,7 +378,9 @@ if not df.empty:
         filtered_df = filtered_df[filtered_df["Date limite"] <= next_month]
 
 if not filtered_df.empty:
-    # Afficher les tâches sous forme de cartes
+    # Afficher les tâches sous forme de grille de cartes
+    st.markdown('<div class="tasks-grid">', unsafe_allow_html=True)
+    
     for index, task in filtered_df.iterrows():
         # Déterminer la classe CSS en fonction du statut et de la date
         status_class = ""
@@ -323,29 +397,55 @@ if not filtered_df.empty:
         
         # Déterminer la priorité basée sur la date
         date_class = "on-track"
+        days_class = "normal"
+        days_until_due = "N/A"
+        
         if "Date limite" in task and pd.notna(task["Date limite"]):
             days_until_due = (task["Date limite"] - today).days
             if days_until_due <= 2:
                 date_class = "urgent"
+                days_class = "urgent"
             elif days_until_due <= 7:
                 date_class = "due-soon"
+                days_class = "warning"
         else:
             days_until_due = "N/A"
         
+        # Afficher chaque tâche dans une carte
         with st.container():
             st.markdown(f'<div class="task-card {date_class}">', unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([3, 1, 1])
-            with col1:
-                st.markdown(f"**{task['Tâche']}**")
-                st.markdown(f"👤 **Responsable:** {task['Responsable']}")
-            with col2:
-                st.markdown(f"📅 **Date limite:** {task['Date limite'] if 'Date limite' in task and pd.notna(task['Date limite']) else 'N/A'}")
-                st.markdown(f"**Jours restants:** {days_until_due}")
-            with col3:
-                st.markdown(f'<span class="{status_class}">{task["Statut"]}</span>', unsafe_allow_html=True)
-                st.markdown(f'<span class="{confirm_class}">Confirmé: {task["Confirmé"]}</span>', unsafe_allow_html=True)
             
-            # Boutons d'action pour chaque tâche
+            # Titre de la tâche
+            st.markdown(f'<div class="task-title">{task["Tâche"]}</div>', unsafe_allow_html=True)
+            
+            # Détails de la tâche
+            st.markdown(f'''
+                <div class="task-detail">
+                    <span class="task-detail-icon">👤</span>
+                    <span>{task["Responsable"]}</span>
+                </div>
+            ''', unsafe_allow_html=True)
+            
+            if "Date limite" in task and pd.notna(task["Date limite"]):
+                st.markdown(f'''
+                    <div class="task-detail">
+                        <span class="task-detail-icon">📅</span>
+                        <span>{task["Date limite"]}</span>
+                    </div>
+                ''', unsafe_allow_html=True)
+            
+            # Ligne de statut et jours restants
+            st.markdown('<div class="task-status-row">', unsafe_allow_html=True)
+            st.markdown(f'<span class="{status_class}">{task["Statut"]}</span>', unsafe_allow_html=True)
+            
+            if days_until_due != "N/A":
+                st.markdown(f'<span class="days-remaining {days_class}">{days_until_due} jours</span>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Confirmation
+            st.markdown(f'<div class="task-detail"><span class="{confirm_class}">Confirmé: {task["Confirmé"]}</span></div>', unsafe_allow_html=True)
+            
+            # Boutons d'action
             col1, col2 = st.columns(2)
             with col1:
                 if st.button(f"✏️ Modifier", key=f"edit_{index}"):
