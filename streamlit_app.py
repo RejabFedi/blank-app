@@ -515,22 +515,24 @@ if not filtered_df.empty:
                         # --- Modal de suppression ---
                         if f"delete_index_{index}" in st.session_state and st.session_state[f"delete_index_{index}"]:
                             with st.modal(f"Supprimer la tâche: {task['Tâche']}", key=f"modal_delete_{index}"):
-                               st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}' ? Cette action est irréversible.")
-                               col1, col2 = st.columns(2)
-                               with col1:
-                                   if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
-                                       success, message = delete_task(task['id'])
-                                       if success:
-                                          st.success("✅ " + message)
-                                          st.session_state[f"delete_index_{index}"] = False
-                                          st.cache_data.clear()
-                                          st.rerun()
-                                      else:
-                                          st.error("❌ " + message)
-                               with col2:       
-                                   if st.button("Annuler", key=f"cancel_delete_{index}"):
-                                       st.session_state[f"delete_index_{index}"] = False
-                                       st.rerun()
+                                st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}' ? Cette action est irréversible.")
+
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
+                                        success, message = delete_task(task['id'])
+                                        if success:
+                                            st.success("✅ " + message)
+                                            st.session_state[f"delete_index_{index}"] = False
+                                            st.cache_data.clear()
+                                            st.rerun()
+                                        else:
+                                            st.error("❌ " + message)
+
+                                with col2:       
+                                    if st.button("Annuler", key=f"cancel_delete_{index}"):
+                                        st.session_state[f"delete_index_{index}"] = False
+                                        st.rerun()
 
                             
             else:
