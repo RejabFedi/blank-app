@@ -158,26 +158,49 @@ def get_status_class(status):
 df = load_data()
 
 # --- CSS personnalisé ---
+# --- CSS personnalisé responsive ---
 st.markdown("""
 <style>
+    /* Conteneur principal : responsive */
     .main-header {
-        font-size: 3rem;
+        font-size: 2.5rem;
         color: #1E3A8A;
         text-align: center;
         margin-bottom: 2rem;
     }
+    @media (max-width: 768px) {
+        .main-header {
+            font-size: 1.8rem;
+        }
+    }
+
     .section-header {
         color: #1E3A8A;
         border-bottom: 2px solid #1E3A8A;
         padding-bottom: 0.5rem;
         margin-top: 2rem;
+        font-size: 1.4rem;
     }
+    @media (max-width: 768px) {
+        .section-header {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Grille de tâches responsive */
     .tasks-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 1rem;
         margin-bottom: 2rem;
     }
+    @media (max-width: 480px) {
+        .tasks-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Carte de tâche */
     .task-card {
         padding: 1rem;
         border-radius: 0.5rem;
@@ -186,12 +209,14 @@ st.markdown("""
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         display: flex;
         flex-direction: column;
-        min-height: 220px;
+        min-height: 200px;
     }
     .task-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
+
+    /* Titre tâche */
     .task-title {
         font-size: 1.1rem;
         font-weight: 600;
@@ -199,11 +224,19 @@ st.markdown("""
         color: #1E3A8A;
         line-height: 1.3;
     }
+    @media (max-width: 768px) {
+        .task-title {
+            font-size: 1rem;
+        }
+    }
+
+    /* Détails */
     .task-detail {
         font-size: 0.9rem;
         margin-bottom: 0.4rem;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
     }
     .task-detail-icon {
         margin-right: 0.5rem;
@@ -211,118 +244,70 @@ st.markdown("""
         width: 20px;
         text-align: center;
     }
+
+    /* Statuts (badges responsives) */
     .task-status-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin: 0.8rem 0;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
-    .status-a-faire {
-        background-color: #E5E7EB;
-        color: #374151;
+    .status-a-faire, .status-en-cours, .status-en-revue,
+    .status-approuve, .status-rejete, .status-termine, .status-archive {
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
         font-weight: 600;
         font-size: 0.8rem;
+        display: inline-block;
     }
-    .status-en-cours {
-        background-color: #FEF3C7;
-        color: #92400E;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .status-en-revue {
-        background-color: #DBEAFE;
-        color: #1E40AF;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .status-approuve {
-        background-color: #D1FAE5;
-        color: #065F46;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .status-rejete {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .status-termine {
-        background-color: #D1FAE5;
-        color: #065F46;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .status-archive {
-        background-color: #E5E7EB;
-        color: #374151;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .confirmed {
-        color: #065F46;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .not-confirmed {
-        color: #991B1B;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
+
+    .status-a-faire { background-color: #E5E7EB; color: #374151; }
+    .status-en-cours { background-color: #FEF3C7; color: #92400E; }
+    .status-en-revue { background-color: #DBEAFE; color: #1E40AF; }
+    .status-approuve, .status-termine { background-color: #D1FAE5; color: #065F46; }
+    .status-rejete { background-color: #FEE2E2; color: #991B1B; }
+    .status-archive { background-color: #E5E7EB; color: #374151; }
+
+    /* Confirmé / Non confirmé */
+    .confirmed { color: #065F46; font-weight: 600; font-size: 0.8rem; }
+    .not-confirmed { color: #991B1B; font-weight: 600; font-size: 0.8rem; }
+
+    /* Jours restants */
     .days-remaining {
         font-weight: 600;
         font-size: 0.8rem;
         padding: 0.2rem 0.5rem;
         border-radius: 0.5rem;
+        display: inline-block;
     }
-    .days-remaining.urgent {
-        background-color: #FEE2E2;
-        color: #DC2626;
-    }
-    .days-remaining.warning {
-        background-color: #FEF3C7;
-        color: #D97706;
-    }
-    .days-remaining.normal {
-        background-color: #D1FAE5;
-        color: #059669;
-    }
+    .days-remaining.urgent { background-color: #FEE2E2; color: #DC2626; }
+    .days-remaining.warning { background-color: #FEF3C7; color: #D97706; }
+    .days-remaining.normal { background-color: #D1FAE5; color: #059669; }
+
+    /* Boutons actions flexibles */
     .task-actions {
         display: flex;
         gap: 0.5rem;
         margin-top: auto;
         padding-top: 0.8rem;
+        flex-wrap: wrap;
     }
     .task-actions button {
-        flex: 1;
+        flex: 1 1 auto;
         padding: 0.4rem;
         font-size: 0.8rem;
+        min-width: 90px;
     }
-    .urgent {
-        border-left: 4px solid #DC2626;
-    }
-    .due-soon {
-        border-left: 4px solid #F59E0B;
-    }
-    .on-track {
-        border-left: 4px solid #10B981;
-    }
+
+    /* Indicateurs de priorité */
+    .urgent { border-left: 4px solid #DC2626; }
+    .due-soon { border-left: 4px solid #F59E0B; }
+    .on-track { border-left: 4px solid #10B981; }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # --- Configuration Airtable dans la sidebar ---
