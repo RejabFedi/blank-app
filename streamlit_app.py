@@ -291,7 +291,7 @@ st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_
 st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
 
 # Instructions de configuration
-if AIRTABLE_API_KEY == "TON_PERSONAL_ACCESS_TOKEN" or AIRTABLE_BASE_ID == "TON_BASE_ID":
+if AIRTABLE_API_KEY == "pat8pwKjxmpeyYdIC.9a8317c49467707c02a82d913172f4f05b64c894ef0b1edf880fb06147263397" or AIRTABLE_BASE_ID == "appllTEXrUFuAaMaq":
     st.warning("""
     ⚠️ **Configuration Airtable requise**
     
