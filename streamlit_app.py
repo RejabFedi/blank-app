@@ -172,11 +172,11 @@ def get_priority_class(priority):
 # Fonction pour obtenir le badge d'urgence selon les jours restants
 def get_urgency_badge(days_until_due):
     if days_until_due < 0:
-        return "<br>🔴 En retard"
+        return "---🔴 En retard"
     elif days_until_due <= 3:
-        return "<br>🔥 Urgent"
+        return "---🔥 Urgent"
     elif days_until_due <= 7:
-        return "<br>⚠️ Bientôt"
+        return "---⚠️ Bientôt"
     else:
         return ""
 
