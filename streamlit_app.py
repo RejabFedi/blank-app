@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
+import time
 
 CSV_FILE = "tasks.csv"
 
@@ -52,6 +53,7 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 1rem;
         background-color: white;
+        position: relative;
     }
     .status-fini {
         background-color: #D1FAE5;
@@ -107,7 +109,56 @@ st.markdown("""
     .on-track {
         border-left: 5px solid #10B981;
     }
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    /* Style pour les modals */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 50%;
+        border-radius: 10px;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
 </style>
+""", unsafe_allow_html=True)
+
+# JavaScript pour gérer les modals
+st.markdown("""
+<script>
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = "block";
+}
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
+}
+</script>
 """, unsafe_allow_html=True)
 
 # --- Sidebar pour la navigation et les filtres ---
@@ -174,7 +225,7 @@ if not df.empty:
 
 if not filtered_df.empty:
     # Afficher les tâches sous forme de cartes
-    for _, task in filtered_df.iterrows():
+    for index, task in filtered_df.iterrows():
         # Déterminer la classe CSS en fonction du statut et de la date
         status_class = ""
         if task["Statut"] == "Fini":
@@ -208,7 +259,81 @@ if not filtered_df.empty:
             with col3:
                 st.markdown(f'<span class="{status_class}">{task["Statut"]}</span>', unsafe_allow_html=True)
                 st.markdown(f'<span class="{confirm_class}">Confirmé: {task["Confirmé"]}</span>', unsafe_allow_html=True)
+            
+            # Boutons d'action pour chaque tâche
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button(f"✏️ Modifier", key=f"edit_{index}"):
+                    st.session_state[f"edit_index_{index}"] = True
+            with col2:
+                if st.button(f"🗑️ Supprimer", key=f"delete_{index}"):
+                    st.session_state[f"delete_index_{index}"] = True
+            
             st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Modal de modification
+            if f"edit_index_{index}" in st.session_state and st.session_state[f"edit_index_{index}"]:
+                with st.form(f"edit_form_{index}"):
+                    st.subheader("Modifier la tâche")
+                    
+                    edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
+                    edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"], 
+                                                  index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0, 
+                                                  key=f"edit_responsable_{index}")
+                    edit_date_limite = st.date_input("Date limite", 
+                                                    value=datetime.strptime(str(task["Date limite"]), "%Y-%m-%d").date(), 
+                                                    key=f"edit_date_{index}")
+                    edit_statut = st.selectbox("Statut", ["Fini", "Pas fini", "En cours", "Bloqué"], 
+                                             index=["Fini", "Pas fini", "En cours", "Bloqué"].index(task["Statut"]), 
+                                             key=f"edit_statut_{index}")
+                    
+                    edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.form_submit_button("Confirmer la modification", type="primary"):
+                            if edit_tache.strip() == "":
+                                st.error("Veuillez saisir une description de tâche")
+                            else:
+                                # Afficher un loader
+                                with st.spinner("Modification en cours..."):
+                                    time.sleep(1)  # Simuler un traitement
+                                    df.at[index, "Tâche"] = edit_tache
+                                    df.at[index, "Responsable"] = edit_responsable
+                                    df.at[index, "Date limite"] = str(edit_date_limite)
+                                    df.at[index, "Statut"] = edit_statut
+                                    df.at[index, "Confirmé"] = "Oui" if edit_confirme else "Non"
+                                    save_data(df)
+                                    st.success("✅ Tâche mise à jour avec succès !")
+                                    st.session_state[f"edit_index_{index}"] = False
+                                    time.sleep(1)  # Petit délai pour voir le message
+                                    st.rerun()
+                    with col2:
+                        if st.form_submit_button("Annuler"):
+                            st.session_state[f"edit_index_{index}"] = False
+                            st.rerun()
+            
+            # Modal de suppression
+            if f"delete_index_{index}" in st.session_state and st.session_state[f"delete_index_{index}"]:
+                st.subheader("Confirmer la suppression")
+                st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}'? Cette action est irréversible.")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
+                        # Afficher un loader
+                        with st.spinner("Suppression en cours..."):
+                            time.sleep(1)  # Simuler un traitement
+                            df = df.drop(index)
+                            save_data(df)
+                            st.success("✅ Tâche supprimée avec succès !")
+                            st.session_state[f"delete_index_{index}"] = False
+                            time.sleep(1)  # Petit délai pour voir le message
+                            st.rerun()
+                with col2:
+                    if st.button("Annuler", key=f"cancel_delete_{index}"):
+                        st.session_state[f"delete_index_{index}"] = False
+                        st.rerun()
 else:
     st.info("Aucune tâche ne correspond aux filtres sélectionnés")
 
@@ -232,66 +357,18 @@ with st.form("add_task", clear_on_submit=True):
         if tache.strip() == "":
             st.error("Veuillez saisir une description de tâche")
         else:
-            new_task = {
-                "Tâche": tache,
-                "Responsable": responsable,
-                "Date limite": str(date_limite),
-                "Statut": statut,
-                "Confirmé": "Oui" if confirme else "Non"
-            }
-            df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
-            save_data(df)
-            st.success("✅ Tâche ajoutée avec succès !")
-            st.rerun()
-
-# --- Modification/Suppression de tâches ---
-st.markdown('<h2 class="section-header">✏️ Gestion des tâches</h2>', unsafe_allow_html=True)
-
-if not df.empty:
-    task_to_edit = st.selectbox("Sélectionner une tâche à modifier", df["Tâche"].tolist(), key="edit_select")
-    
-    if task_to_edit:
-        task_index = df[df["Tâche"] == task_to_edit].index[0]
-        task_data = df.loc[task_index]
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            with st.form("edit_task"):
-                edit_tache = st.text_input("Tâche", value=task_data["Tâche"], key="edit_tache")
-                edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"], 
-                                              index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task_data["Responsable"]) if task_data["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0, 
-                                              key="edit_responsable")
-                edit_date_limite = st.date_input("Date limite", 
-                                                value=datetime.strptime(str(task_data["Date limite"]), "%Y-%m-%d").date(), 
-                                                key="edit_date")
-                edit_statut = st.selectbox("Statut", ["Fini", "Pas fini", "En cours", "Bloqué"], 
-                                         index=["Fini", "Pas fini", "En cours", "Bloqué"].index(task_data["Statut"]), 
-                                         key="edit_statut")
-                
-                edit_confirme = st.checkbox("Confirmé ?", value=task_data["Confirmé"] == "Oui", key="edit_confirm")
-                
-                update_clicked = st.form_submit_button("Mettre à jour", type="primary")
-                
-                if update_clicked:
-                    if edit_tache.strip() == "":
-                        st.error("Veuillez saisir une description de tâche")
-                    else:
-                        df.at[task_index, "Tâche"] = edit_tache
-                        df.at[task_index, "Responsable"] = edit_responsable
-                        df.at[task_index, "Date limite"] = str(edit_date_limite)
-                        df.at[task_index, "Statut"] = edit_statut
-                        df.at[task_index, "Confirmé"] = "Oui" if edit_confirme else "Non"
-                        save_data(df)
-                        st.success("✅ Tâche mise à jour avec succès !")
-                        st.rerun()
-        
-        with col2:
-            st.markdown("### Supprimer la tâche")
-            st.warning("Cette action est irréversible. Êtes-vous sûr de vouloir supprimer cette tâche?")
-            if st.button("Supprimer définitivement", type="secondary"):
-                df = df.drop(task_index)
+            # Afficher un loader
+            with st.spinner("Ajout en cours..."):
+                time.sleep(1)  # Simuler un traitement
+                new_task = {
+                    "Tâche": tache,
+                    "Responsable": responsable,
+                    "Date limite": str(date_limite),
+                    "Statut": statut,
+                    "Confirmé": "Oui" if confirme else "Non"
+                }
+                df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
                 save_data(df)
-                st.warning(f"Tâche '{task_to_edit}' supprimée.")
+                st.success("✅ Tâche ajoutée avec succès !")
+                time.sleep(1)  # Petit délai pour voir le message
                 st.rerun()
-else:
-    st.info("Aucune tâche à modifier ou supprimer")
