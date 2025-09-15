@@ -33,11 +33,11 @@ def load_data():
 
         if response.status_code == 401:
             st.error("Erreur d'authentification Airtable. Vérifiez votre token API.")
-            return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+            return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé", "Priorité", "Commentaires"])
         
         if response.status_code == 404:
             st.error("Base Airtable non trouvée. Vérifiez votre Base ID.")
-            return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+            return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé", "Priorité", "Commentaires"])
         
         response.raise_for_status()  # Vérifie si la requête a réussi
         
@@ -54,7 +54,9 @@ def load_data():
                 'Responsable': ", ".join(fields.get('Responsable', [])) if isinstance(fields.get('Responsable', []), list) else fields.get('Responsable', ''),
                 'Date limite': fields.get('Date limite', ''),
                 'Statut': fields.get('Statut', ''),
-                'Confirmé': fields.get('Confirmé', 'Non')
+                'Confirmé': fields.get('Confirmé', 'Non'),
+                'Priorité': fields.get('Priorité', 'Moyenne'),
+                'Commentaires': fields.get('Commentaires', '')
             }
             tasks.append(task)
         
@@ -67,10 +69,10 @@ def load_data():
         return df
     except requests.exceptions.RequestException as e:
         st.error(f"Erreur de connexion à Airtable: {e}")
-        return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+        return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé", "Priorité", "Commentaires"])
     except Exception as e:
         st.error(f"Erreur lors du chargement des données: {e}")
-        return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+        return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé", "Priorité", "Commentaires"])
 
 # --- Fonction pour créer une tâche dans Airtable ---
 def create_task(task_data):
@@ -83,7 +85,9 @@ def create_task(task_data):
                         "Responsable": task_data["Responsable"],
                         "Date limite": task_data["Date limite"],
                         "Statut": task_data["Statut"],
-                        "Confirmé": task_data["Confirmé"]
+                        "Confirmé": task_data["Confirmé"],
+                        "Priorité": task_data["Priorité"],
+                        "Commentaires": task_data["Commentaires"]
                     }
                 }
             ]
@@ -111,7 +115,9 @@ def update_task(task_id, task_data):
                         "Responsable": task_data["Responsable"],
                         "Date limite": task_data["Date limite"],
                         "Statut": task_data["Statut"],
-                        "Confirmé": task_data["Confirmé"]
+                        "Confirmé": task_data["Confirmé"],
+                        "Priorité": task_data["Priorité"],
+                        "Commentaires": task_data["Commentaires"]
                     }
                 }
             ]
@@ -154,10 +160,29 @@ def get_status_class(status):
     }
     return status_classes.get(status, "status-a-faire")
 
+# Fonction pour obtenir la classe CSS selon la priorité
+def get_priority_class(priority):
+    priority_classes = {
+        "Basse": "priority-basse",
+        "Moyenne": "priority-moyenne",
+        "Haute": "priority-haute"
+    }
+    return priority_classes.get(priority, "priority-moyenne")
+
+# Fonction pour obtenir le badge d'urgence selon les jours restants
+def get_urgency_badge(days_until_due):
+    if days_until_due < 0:
+        return "🔴 En retard"
+    elif days_until_due <= 3:
+        return "🔥 Urgent"
+    elif days_until_due <= 7:
+        return "⚠️ Bientôt"
+    else:
+        return ""
+
 # Charger les données
 df = load_data()
 
-# --- CSS personnalisé ---
 # --- CSS personnalisé responsive ---
 st.markdown("""
 <style>
@@ -270,6 +295,31 @@ st.markdown("""
     .status-rejete { background-color: #FEE2E2; color: #991B1B; }
     .status-archive { background-color: #E5E7EB; color: #374151; }
 
+    /* Priorités */
+    .priority-basse, .priority-moyenne, .priority-haute {
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: inline-block;
+    }
+    .priority-basse { background-color: #D1FAE5; color: #065F46; }
+    .priority-moyenne { background-color: #FEF3C7; color: #92400E; }
+    .priority-haute { background-color: #FEE2E2; color: #991B1B; }
+
+    /* Badges d'urgence */
+    .urgency-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+    .urgency-urgent { background-color: #FEE2E2; color: #DC2626; }
+    .urgency-warning { background-color: #FEF3C7; color: #D97706; }
+    .urgency-normal { background-color: #D1FAE5; color: #059669; }
+
     /* Confirmé / Non confirmé */
     .confirmed { color: #065F46; font-weight: 600; font-size: 0.8rem; }
     .not-confirmed { color: #991B1B; font-weight: 600; font-size: 0.8rem; }
@@ -341,8 +391,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-
 # --- Configuration Airtable dans la sidebar ---
 with st.sidebar:
     # --- En-tête ---
@@ -366,6 +414,10 @@ with st.sidebar:
         # Statut avec radio (compact)
         all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
         selected_status = st.radio("📌 Statut", all_statuses, horizontal=False)
+        
+        # Priorité avec radio (compact)
+        all_priorities = ["Tous"] + sorted(df["Priorité"].unique().tolist()) if not df.empty and "Priorité" in df.columns else ["Tous"]
+        selected_priority = st.radio("🚨 Priorité", all_priorities, horizontal=False)
 
         # Filtre de date avec select_slider (compact + visuel)
         date_filter = st.select_slider("📅 Échéance", options=["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"], value="Toutes")
@@ -378,13 +430,16 @@ with st.sidebar:
             confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
 
             # --- Badges dynamiques ---
-            urgent_tasks = len(df[(df["Date limite"] < datetime.today().date()) & (df["Statut"] != "Terminé")])
-            due_soon_tasks = len(df[(df["Date limite"] >= datetime.today().date()) & 
-                                    (df["Date limite"] <= datetime.today().date() + pd.Timedelta(days=3)) & 
+            today = datetime.today().date()
+            urgent_tasks = len(df[(df["Date limite"] < today) & (df["Statut"] != "Terminé")])
+            due_soon_tasks = len(df[(df["Date limite"] >= today) & 
+                                    (df["Date limite"] <= today + pd.Timedelta(days=3)) & 
                                     (df["Statut"] != "Terminé")])
+            high_priority_tasks = len(df[(df["Priorité"] == "Haute") & (df["Statut"] != "Terminé")])
 
             st.markdown(f"🔴 **Urgentes** : {urgent_tasks}")
             st.markdown(f"🟡 **À échéance proche** : {due_soon_tasks}")
+            st.markdown(f"⚡ **Haute priorité** : {high_priority_tasks}")
             st.markdown(f"🟢 **Terminées** : {completed_tasks}")
 
             # --- Progress bar de complétion ---
@@ -406,8 +461,6 @@ st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
 
-
-
 # Appliquer les filtres
 filtered_df = df.copy()
 if not df.empty:
@@ -415,6 +468,8 @@ if not df.empty:
         filtered_df = filtered_df[filtered_df["Responsable"] == selected_responsible]
     if selected_status != "Tous" and "Statut" in df.columns:
         filtered_df = filtered_df[filtered_df["Statut"] == selected_status]
+    if selected_priority != "Tous" and "Priorité" in df.columns:
+        filtered_df = filtered_df[filtered_df["Priorité"] == selected_priority]
     
     # Filtrer par date
     today = datetime.today().date()
@@ -444,17 +499,26 @@ if not filtered_df.empty:
                     # Déterminer confirmation
                     confirm_class = "✅ Oui" if task["Confirmé"] == "Oui" else "❌ Non"
 
-                    # Calcul jours restants
-                    days_until_due = "N/A"
+                    # Calcul jours restants et badge d'urgence
+                    days_until_due = None
+                    urgency_badge = ""
                     if "Date limite" in task and pd.notna(task["Date limite"]):
                         days_until_due = (task["Date limite"] - today).days
+                        urgency_badge = get_urgency_badge(days_until_due)
 
                     # Bloc d'affichage (expander par tâche)
-                    with st.expander(f"{task['Tâche']}"):
+                    with st.expander(f"{task['Tâche']} {urgency_badge}"):
                         st.write(f"👤 Responsable : {task['Responsable']}")
+                        st.write(f"🚨 Priorité : **<span class='{get_priority_class(task['Priorité'])}'>{task['Priorité']}</span>**", unsafe_allow_html=True)
+                        
                         if pd.notna(task["Date limite"]):
-                            st.write(f"📅 Échéance : {task['Date limite']} ({days_until_due} jours restants)")
+                            days_class = "urgent" if days_until_due <= 3 else "warning" if days_until_due <= 7 else "normal"
+                            st.write(f"📅 Échéance : {task['Date limite']} (<span class='days-remaining {days_class}'>{days_until_due} jours restants</span>)", unsafe_allow_html=True)
+                        
                         st.write(f"✅ Confirmé : {confirm_class}")
+                        
+                        if task['Commentaires']:
+                            st.write(f"💬 Commentaires : {task['Commentaires']}")
 
                         # Boutons d'action
                         col1, col2 = st.columns(2)
@@ -474,6 +538,10 @@ if not filtered_df.empty:
                                 edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
                                     index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
                                     key=f"edit_responsable_{index}")
+                                
+                                edit_priority = st.selectbox("Priorité", ["Basse", "Moyenne", "Haute"],
+                                    index=["Basse", "Moyenne", "Haute"].index(task["Priorité"]) if task["Priorité"] in ["Basse", "Moyenne", "Haute"] else 1,
+                                    key=f"edit_priority_{index}")
 
                                 current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
                                 edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
@@ -482,6 +550,8 @@ if not filtered_df.empty:
                                     index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"]) 
                                     if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
                                     key=f"edit_statut_{index}")
+
+                                edit_commentaires = st.text_area("Commentaires", value=task.get("Commentaires", ""), key=f"edit_commentaires_{index}")
 
                                 edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
 
@@ -496,8 +566,10 @@ if not filtered_df.empty:
                                                 updated_task = {
                                                     "Tâche": edit_tache,
                                                     "Responsable": edit_responsable,
+                                                    "Priorité": edit_priority,
                                                     "Date limite": str(edit_date_limite),
                                                     "Statut": edit_statut,
+                                                    "Commentaires": edit_commentaires,
                                                     "Confirmé": "Oui" if edit_confirme else "Non"
                                                 }
                                                 success, message = update_task(task['id'], updated_task)
@@ -550,10 +622,12 @@ with st.form("add_task", clear_on_submit=True):
     with col1:
         tache = st.text_input("Tâche *", placeholder="Entrez la description de la tâche")
         responsable = st.selectbox("Responsable *", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"])
+        priorite = st.selectbox("Priorité *", ["Basse", "Moyenne", "Haute"])
     with col2:
         date_limite = st.date_input("Date limite *", min_value=datetime.today().date())
         statut = st.selectbox("Statut *", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"])
     
+    commentaires = st.text_area("Commentaires / Journal de bord")
     confirme = st.checkbox("Confirmé ?")
     
     submitted = st.form_submit_button("Ajouter la tâche", type="primary")
@@ -570,8 +644,10 @@ with st.form("add_task", clear_on_submit=True):
                 new_task = {
                     "Tâche": tache,
                     "Responsable": responsable,
+                    "Priorité": priorite,
                     "Date limite": str(date_limite),
                     "Statut": statut,
+                    "Commentaires": commentaires,
                     "Confirmé": "Oui" if confirme else "Non"
                 }
                 
