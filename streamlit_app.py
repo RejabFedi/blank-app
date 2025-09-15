@@ -290,17 +290,6 @@ st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_
 # Information sur la source des données
 st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
 
-# Instructions de configuration
-if AIRTABLE_API_KEY == "pat8pwKjxmpeyYdIC.9a8317c49467707c02a82d913172f4f05b64c894ef0b1edf880fb06147263397" or AIRTABLE_BASE_ID == "appllTEXrUFuAaMaq":
-    st.warning("""
-    ⚠️ **Configuration Airtable requise**
-    
-    Pour utiliser cette application, vous devez configurer votre accès Airtable :
-    
-    1. Obtenez votre clé API Airtable depuis [votre compte Airtable](https://airtable.com/account)
-    2. Obtenez l'ID de votre base Airtable depuis l'URL de votre base
-    3. Entrez ces informations dans le formulaire de configuration dans la sidebar
-    """)
 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
