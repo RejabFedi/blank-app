@@ -141,6 +141,19 @@ def delete_task(task_id):
     except Exception as e:
         return False, f"Erreur lors de la suppression: {e}"
 
+# Fonction pour obtenir la classe CSS selon le statut
+def get_status_class(status):
+    status_classes = {
+        "À faire": "status-a-faire",
+        "En cours": "status-en-cours",
+        "En revue": "status-en-revue",
+        "Approuvé": "status-approuve",
+        "Rejeté": "status-rejete",
+        "Terminé": "status-termine",
+        "Archivé": "status-archive"
+    }
+    return status_classes.get(status, "status-a-faire")
+
 # Charger les données
 df = load_data()
 
@@ -204,17 +217,9 @@ st.markdown("""
         align-items: center;
         margin: 0.8rem 0;
     }
-    .status-fini {
-        background-color: #D1FAE5;
-        color: #065F46;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-    }
-    .status-pas-fini {
-        background-color: #FEE2E2;
-        color: #991B1B;
+    .status-a-faire {
+        background-color: #E5E7EB;
+        color: #374151;
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
         font-weight: 600;
@@ -228,7 +233,39 @@ st.markdown("""
         font-weight: 600;
         font-size: 0.8rem;
     }
-    .status-bloque {
+    .status-en-revue {
+        background-color: #DBEAFE;
+        color: #1E40AF;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .status-approuve {
+        background-color: #D1FAE5;
+        color: #065F46;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .status-rejete {
+        background-color: #FEE2E2;
+        color: #991B1B;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .status-termine {
+        background-color: #D1FAE5;
+        color: #065F46;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .status-archive {
         background-color: #E5E7EB;
         color: #374151;
         padding: 0.25rem 0.5rem;
@@ -295,8 +332,6 @@ with st.sidebar:
     
     st.subheader("Configuration Airtable")
     
-   
-    
     # Bouton pour actualiser les données
     if st.button("🔄 Actualiser les données"):
         st.cache_data.clear()
@@ -320,7 +355,7 @@ with st.sidebar:
     st.subheader("Métriques")
     if not df.empty:
         total_tasks = len(df)
-        completed_tasks = len(df[df["Statut"] == "Fini"]) if "Statut" in df.columns else 0
+        completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
         confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
         
         col1, col2 = st.columns(2)
@@ -339,7 +374,6 @@ st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_
 
 # Information sur la source des données
 st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
-
 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
@@ -367,7 +401,7 @@ if not df.empty:
 if not filtered_df.empty:
     st.subheader("Kanban des tâches")
 
-    statuses = ["Fini", "En cours", "Pas fini", "Bloqué"]
+    statuses = ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"]
     cols = st.columns(len(statuses))
 
     for i, status in enumerate(statuses):
@@ -414,8 +448,9 @@ if not filtered_df.empty:
                                 current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
                                 edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
 
-                                edit_statut = st.selectbox("Statut", ["Fini", "Pas fini", "En cours", "Bloqué"],
-                                    index=["Fini", "Pas fini", "En cours", "Bloqué"].index(task["Statut"]) if task["Statut"] in ["Fini", "Pas fini", "En cours", "Bloqué"] else 1,
+                                edit_statut = st.selectbox("Statut", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
+                                    index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"]) 
+                                    if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
                                     key=f"edit_statut_{index}")
 
                                 edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
@@ -477,7 +512,6 @@ if not filtered_df.empty:
 else:
     st.info("Aucune tâche ne correspond aux filtres sélectionnés")
 
-
 # --- Formulaire d'ajout de tâche ---
 st.markdown('<h2 class="section-header">➕ Ajouter une nouvelle tâche</h2>', unsafe_allow_html=True)
 
@@ -488,7 +522,7 @@ with st.form("add_task", clear_on_submit=True):
         responsable = st.selectbox("Responsable *", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"])
     with col2:
         date_limite = st.date_input("Date limite *", min_value=datetime.today().date())
-        statut = st.selectbox("Statut *", ["Fini", "Pas fini", "En cours", "Bloqué"])
+        statut = st.selectbox("Statut *", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"])
     
     confirme = st.checkbox("Confirmé ?")
     
