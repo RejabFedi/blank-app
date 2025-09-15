@@ -15,17 +15,30 @@ st.set_page_config(
 )
 
 # --- Config Airtable ---
-TOKEN = "pat0PrTcwP3bmf8sB.121da827544076506db17fe13b4d104d12026bf4eb4f1fe828a63f466f25c0f0"
-BASE_ID = "appllTEXrUFuAaMaq"
+# Ces informations doivent être remplacées par vos véritables identifiants Airtable
+AIRTABLE_API_KEY = st.secrets.get("AIRTABLE_API_KEY", "pat0PrTcwP3bmf8sB.121da827544076506db17fe13b4d104d12026bf4eb4f1fe828a63f466f25c0f0")
+AIRTABLE_BASE_ID = st.secrets.get("AIRTABLE_BASE_ID", "appllTEXrUFuAaMaq")
 TABLE_NAME = "tasks"
-URL = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}"
-HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+URL = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{TABLE_NAME}"
+HEADERS = {
+    "Authorization": f"Bearer {AIRTABLE_API_KEY}", 
+    "Content-Type": "application/json"
+}
 
 # --- Charger les données depuis Airtable ---
 @st.cache_data(ttl=300)  # Cache pour 5 minutes
 def load_data():
     try:
-        response = requests.get(URL, headers=HEADERS)
+        response = requests.get(URL, headers=HEADERS, params={"view": "Grid view"})
+        
+        if response.status_code == 401:
+            st.error("Erreur d'authentification Airtable. Vérifiez votre token API.")
+            return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+        
+        if response.status_code == 404:
+            st.error("Base Airtable non trouvée. Vérifiez votre Base ID.")
+            return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+        
         response.raise_for_status()  # Vérifie si la requête a réussi
         
         data = response.json()
@@ -77,6 +90,10 @@ def create_task(task_data):
         }
         
         response = requests.post(URL, headers=HEADERS, data=json.dumps(data))
+        
+        if response.status_code == 401:
+            return False, "Erreur d'authentification. Vérifiez votre token API."
+        
         response.raise_for_status()
         return True, "Tâche créée avec succès"
     except Exception as e:
@@ -101,6 +118,10 @@ def update_task(task_id, task_data):
         }
         
         response = requests.patch(URL, headers=HEADERS, data=json.dumps(data))
+        
+        if response.status_code == 401:
+            return False, "Erreur d'authentification. Vérifiez votre token API."
+        
         response.raise_for_status()
         return True, "Tâche mise à jour avec succès"
     except Exception as e:
@@ -111,6 +132,10 @@ def delete_task(task_id):
     try:
         delete_url = f"{URL}?records[]={task_id}"
         response = requests.delete(delete_url, headers=HEADERS)
+        
+        if response.status_code == 401:
+            return False, "Erreur d'authentification. Vérifiez votre token API."
+        
         response.raise_for_status()
         return True, "Tâche supprimée avec succès"
     except Exception as e:
@@ -204,9 +229,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar pour la navigation et les filtres ---
+# --- Configuration Airtable dans la sidebar ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center;'>ANCU</h1>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    st.subheader("Configuration Airtable")
+    
+    # Formulaire pour configurer Airtable
+    with st.form("airtable_config"):
+        api_key = st.text_input("Clé API Airtable", value=AIRTABLE_API_KEY, type="password")
+        base_id = st.text_input("ID de la base Airtable", value=AIRTABLE_BASE_ID)
+        
+        if st.form_submit_button("Sauvegarder la configuration"):
+            st.success("Configuration sauvegardée (simulation). En production, utilisez les secrets Streamlit.")
+            st.rerun()
+    
     st.markdown("---")
     
     # Bouton pour actualiser les données
@@ -251,6 +289,18 @@ st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_
 
 # Information sur la source des données
 st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
+
+# Instructions de configuration
+if AIRTABLE_API_KEY == "TON_PERSONAL_ACCESS_TOKEN" or AIRTABLE_BASE_ID == "TON_BASE_ID":
+    st.warning("""
+    ⚠️ **Configuration Airtable requise**
+    
+    Pour utiliser cette application, vous devez configurer votre accès Airtable :
+    
+    1. Obtenez votre clé API Airtable depuis [votre compte Airtable](https://airtable.com/account)
+    2. Obtenez l'ID de votre base Airtable depuis l'URL de votre base
+    3. Entrez ces informations dans le formulaire de configuration dans la sidebar
+    """)
 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
