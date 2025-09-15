@@ -455,43 +455,32 @@ if not filtered_df.empty:
 
                         # --- Modal de modification ---
                         if f"edit_index_{index}" in st.session_state and st.session_state[f"edit_index_{index}"]:
-                            with st.modal(f"Modifier la tâche: {task['Tâche']}", key=f"modal_edit_{index}"):
+                            with st.form(f"edit_form_{index}"):
                                 st.subheader("Modifier la tâche")
 
                                 edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
+                                edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
+                                    index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
+                                    key=f"edit_responsable_{index}")
 
-                                edit_responsable = st.selectbox(
-                                    "Responsable",
-                                    ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
-                                    index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"])
-                                    if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
-                                    key=f"edit_responsable_{index}"
-                                )
-
-                                current_date = (
-                                    task["Date limite"]
-                                    if "Date limite" in task and pd.notna(task["Date limite"])
-                                    else datetime.today().date()
-                                )
+                                current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
                                 edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
 
-                                edit_statut = st.selectbox(
-                                    "Statut",
-                                    ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
-                                    index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"])
+                                edit_statut = st.selectbox("Statut", ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"],
+                                    index=["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"].index(task["Statut"]) 
                                     if task["Statut"] in ["À faire", "En cours", "En revue", "Approuvé", "Rejeté", "Terminé", "Archivé"] else 0,
-                                    key=f"edit_statut_{index}"
-                                )
+                                    key=f"edit_statut_{index}")
 
                                 edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
 
                                 col1, col2 = st.columns(2)
                                 with col1:
-                                    if st.button("Confirmer la modification", type="primary", key=f"confirm_edit_{index}"):
+                                    if st.form_submit_button("Confirmer la modification", type="primary"):
                                         if edit_tache.strip() == "":
                                             st.error("Veuillez saisir une description de tâche")
                                         else:
                                             with st.spinner("Modification en cours..."):
+                                                time.sleep(1)
                                                 updated_task = {
                                                     "Tâche": edit_tache,
                                                     "Responsable": edit_responsable,
@@ -504,37 +493,38 @@ if not filtered_df.empty:
                                                     st.success("✅ " + message)
                                                     st.session_state[f"edit_index_{index}"] = False
                                                     st.cache_data.clear()
+                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
                                                     st.error("❌ " + message)
                                 with col2:
-                                    if st.button("Annuler", key=f"cancel_edit_{index}"):
+                                    if st.form_submit_button("Annuler"):
                                         st.session_state[f"edit_index_{index}"] = False
                                         st.rerun()
 
                         # --- Modal de suppression ---
                         if f"delete_index_{index}" in st.session_state and st.session_state[f"delete_index_{index}"]:
-                            with st.modal(f"Supprimer la tâche: {task['Tâche']}", key=f"modal_delete_{index}"):
-                                st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}' ? Cette action est irréversible.")
+                            st.subheader("Confirmer la suppression")
+                            st.warning(f"Êtes-vous sûr de vouloir supprimer la tâche : '{task['Tâche']}' ? Cette action est irréversible.")
 
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                if st.button("Oui, supprimer", type="primary", key=f"confirm_delete_{index}"):
+                                    with st.spinner("Suppression en cours..."):
+                                        time.sleep(1)
                                         success, message = delete_task(task['id'])
                                         if success:
                                             st.success("✅ " + message)
                                             st.session_state[f"delete_index_{index}"] = False
                                             st.cache_data.clear()
+                                            time.sleep(1)
                                             st.rerun()
                                         else:
                                             st.error("❌ " + message)
-
-                                with col2:       
-                                    if st.button("Annuler", key=f"cancel_delete_{index}"):
-                                        st.session_state[f"delete_index_{index}"] = False
-                                        st.rerun()
-
-                            
+                            with col2:
+                                if st.button("Annuler", key=f"cancel_delete_{index}"):
+                                    st.session_state[f"delete_index_{index}"] = False
+                                    st.rerun()
             else:
                 st.info("Aucune tâche")
 else:
