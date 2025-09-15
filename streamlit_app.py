@@ -406,14 +406,6 @@ st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
 
-# --- Barre de recherche globale ---
-search_query = st.text_input("🔍 Recherche", placeholder="Rechercher par tâche ou responsable...")
-
-if search_query.strip() != "":
-    filtered_df = filtered_df[
-        filtered_df["Tâche"].str.contains(search_query, case=False, na=False) |
-        filtered_df["Responsable"].str.contains(search_query, case=False, na=False)
-    ]
 
 
 # Appliquer les filtres
