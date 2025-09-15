@@ -29,8 +29,8 @@ HEADERS = {
 @st.cache_data(ttl=300)  # Cache pour 5 minutes
 def load_data():
     try:
-        response = requests.get(URL, headers=HEADERS,params={"view": "Grid view"})
-        
+        response = requests.get(URL, headers=HEADERS)
+
         if response.status_code == 401:
             st.error("Erreur d'authentification Airtable. Vérifiez votre token API.")
             return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
