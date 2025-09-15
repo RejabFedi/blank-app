@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import time
 import requests
-from io import StringIO
+import json
 
 # --- Configuration de la page ---
 st.set_page_config(
@@ -14,39 +14,107 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- URL du Google Sheet ---
-CSV_URL = "https://docs.google.com/spreadsheets/d/1CcWZjT94NIu3t1eOvNeaR8Zx7T3y_LOSyQeQWitqihA/edit?usp=sharing"
+# --- Config Airtable ---
+TOKEN = "pat0PrTcwP3bmf8sB.121da827544076506db17fe13b4d104d12026bf4eb4f1fe828a63f466f25c0f0"
+BASE_ID = "appllTEXrUFuAaMaq"
+TABLE_NAME = "Tasks"
+URL = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}"
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
-# --- Charger les données depuis Google Sheets ---
+# --- Charger les données depuis Airtable ---
 @st.cache_data(ttl=300)  # Cache pour 5 minutes
 def load_data():
     try:
-        response = requests.get(CSV_URL)
+        response = requests.get(URL, headers=HEADERS)
         response.raise_for_status()  # Vérifie si la requête a réussi
         
-        # Lire le CSV depuis la réponse
-        df = pd.read_csv(StringIO(response.text))
+        data = response.json()
+        records = data.get('records', [])
+        
+        # Convertir les données Airtable en DataFrame
+        tasks = []
+        for record in records:
+            fields = record.get('fields', {})
+            task = {
+                'id': record.get('id'),
+                'Tâche': fields.get('Tâche', ''),
+                'Responsable': fields.get('Responsable', ''),
+                'Date limite': fields.get('Date limite', ''),
+                'Statut': fields.get('Statut', ''),
+                'Confirmé': fields.get('Confirmé', 'Non')
+            }
+            tasks.append(task)
+        
+        df = pd.DataFrame(tasks)
         
         # Convertir la date limite en datetime pour le filtrage
-        if 'Date limite' in df.columns:
+        if 'Date limite' in df.columns and not df.empty:
             df['Date limite'] = pd.to_datetime(df['Date limite']).dt.date
         
         return df
     except requests.exceptions.RequestException as e:
-        st.error(f"Erreur de connexion au Google Sheet: {e}")
-        return pd.DataFrame(columns=["Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+        st.error(f"Erreur de connexion à Airtable: {e}")
+        return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
     except Exception as e:
         st.error(f"Erreur lors du chargement des données: {e}")
-        return pd.DataFrame(columns=["Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+        return pd.DataFrame(columns=["id", "Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
 
-# --- Fonction pour sauvegarder les données (simulation) ---
-# Note: Dans une application réelle, vous devriez implémenter l'écriture sur Google Sheets
-# via l'API Google Sheets. Cette fonction est une simulation.
-def save_data(df):
-    st.warning("Fonction de sauvegarde simulée. Dans une application réelle, implémentez l'API Google Sheets.")
-    # Ici, vous devriez normalement utiliser l'API Google Sheets pour écrire les données
-    # Pour l'instant, on affiche juste un message
-    st.info("Les modifications ne sont pas sauvegardées de manière permanente dans cette démo.")
+# --- Fonction pour créer une tâche dans Airtable ---
+def create_task(task_data):
+    try:
+        data = {
+            "records": [
+                {
+                    "fields": {
+                        "Tâche": task_data["Tâche"],
+                        "Responsable": task_data["Responsable"],
+                        "Date limite": task_data["Date limite"],
+                        "Statut": task_data["Statut"],
+                        "Confirmé": task_data["Confirmé"]
+                    }
+                }
+            ]
+        }
+        
+        response = requests.post(URL, headers=HEADERS, data=json.dumps(data))
+        response.raise_for_status()
+        return True, "Tâche créée avec succès"
+    except Exception as e:
+        return False, f"Erreur lors de la création: {e}"
+
+# --- Fonction pour mettre à jour une tâche dans Airtable ---
+def update_task(task_id, task_data):
+    try:
+        data = {
+            "records": [
+                {
+                    "id": task_id,
+                    "fields": {
+                        "Tâche": task_data["Tâche"],
+                        "Responsable": task_data["Responsable"],
+                        "Date limite": task_data["Date limite"],
+                        "Statut": task_data["Statut"],
+                        "Confirmé": task_data["Confirmé"]
+                    }
+                }
+            ]
+        }
+        
+        response = requests.patch(URL, headers=HEADERS, data=json.dumps(data))
+        response.raise_for_status()
+        return True, "Tâche mise à jour avec succès"
+    except Exception as e:
+        return False, f"Erreur lors de la mise à jour: {e}"
+
+# --- Fonction pour supprimer une tâche dans Airtable ---
+def delete_task(task_id):
+    try:
+        delete_url = f"{URL}?records[]={task_id}"
+        response = requests.delete(delete_url, headers=HEADERS)
+        response.raise_for_status()
+        return True, "Tâche supprimée avec succès"
+    except Exception as e:
+        return False, f"Erreur lors de la suppression: {e}"
 
 # Charger les données
 df = load_data()
@@ -133,38 +201,6 @@ st.markdown("""
         gap: 0.5rem;
         margin-top: 1rem;
     }
-    /* Style pour les modals */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.4);
-    }
-    .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 50%;
-        border-radius: 10px;
-    }
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -181,10 +217,10 @@ with st.sidebar:
     
     # Filtres
     st.subheader("Filtres")
-    all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty else ["Tous"]
+    all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
     selected_responsible = st.selectbox("Responsable", all_responsibles)
     
-    all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty else ["Tous"]
+    all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
     selected_status = st.selectbox("Statut", all_statuses)
     
     # Filtre de date
@@ -196,8 +232,8 @@ with st.sidebar:
     st.subheader("Métriques")
     if not df.empty:
         total_tasks = len(df)
-        completed_tasks = len(df[df["Statut"] == "Fini"])
-        confirmed_tasks = len(df[df["Confirmé"] == "Oui"])
+        completed_tasks = len(df[df["Statut"] == "Fini"]) if "Statut" in df.columns else 0
+        confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
         
         col1, col2 = st.columns(2)
         with col1:
@@ -214,7 +250,7 @@ with st.sidebar:
 st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_allow_html=True)
 
 # Information sur la source des données
-st.info("📊 Données chargées depuis Google Sheets | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
+st.info("📊 Données chargées depuis Airtable | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
@@ -222,20 +258,20 @@ st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_all
 # Appliquer les filtres
 filtered_df = df.copy()
 if not df.empty:
-    if selected_responsible != "Tous":
+    if selected_responsible != "Tous" and "Responsable" in df.columns:
         filtered_df = filtered_df[filtered_df["Responsable"] == selected_responsible]
-    if selected_status != "Tous":
+    if selected_status != "Tous" and "Statut" in df.columns:
         filtered_df = filtered_df[filtered_df["Statut"] == selected_status]
     
     # Filtrer par date
     today = datetime.today().date()
-    if date_filter == "Cette semaine":
+    if date_filter == "Cette semaine" and "Date limite" in df.columns:
         next_week = today + pd.Timedelta(days=7)
         filtered_df = filtered_df[filtered_df["Date limite"] <= next_week]
-    elif date_filter == "Cette quinzaine":
+    elif date_filter == "Cette quinzaine" and "Date limite" in df.columns:
         next_two_weeks = today + pd.Timedelta(days=14)
         filtered_df = filtered_df[filtered_df["Date limite"] <= next_two_weeks]
-    elif date_filter == "Ce mois":
+    elif date_filter == "Ce mois" and "Date limite" in df.columns:
         next_month = today + pd.Timedelta(days=30)
         filtered_df = filtered_df[filtered_df["Date limite"] <= next_month]
 
@@ -257,11 +293,14 @@ if not filtered_df.empty:
         
         # Déterminer la priorité basée sur la date
         date_class = "on-track"
-        days_until_due = (task["Date limite"] - today).days
-        if days_until_due <= 2:
-            date_class = "urgent"
-        elif days_until_due <= 7:
-            date_class = "due-soon"
+        if "Date limite" in task and pd.notna(task["Date limite"]):
+            days_until_due = (task["Date limite"] - today).days
+            if days_until_due <= 2:
+                date_class = "urgent"
+            elif days_until_due <= 7:
+                date_class = "due-soon"
+        else:
+            days_until_due = "N/A"
         
         with st.container():
             st.markdown(f'<div class="task-card {date_class}">', unsafe_allow_html=True)
@@ -270,7 +309,7 @@ if not filtered_df.empty:
                 st.markdown(f"**{task['Tâche']}**")
                 st.markdown(f"👤 **Responsable:** {task['Responsable']}")
             with col2:
-                st.markdown(f"📅 **Date limite:** {task['Date limite']}")
+                st.markdown(f"📅 **Date limite:** {task['Date limite'] if 'Date limite' in task and pd.notna(task['Date limite']) else 'N/A'}")
                 st.markdown(f"**Jours restants:** {days_until_due}")
             with col3:
                 st.markdown(f'<span class="{status_class}">{task["Statut"]}</span>', unsafe_allow_html=True)
@@ -296,11 +335,13 @@ if not filtered_df.empty:
                     edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"], 
                                                   index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0, 
                                                   key=f"edit_responsable_{index}")
-                    edit_date_limite = st.date_input("Date limite", 
-                                                    value=datetime.strptime(str(task["Date limite"]), "%Y-%m-%d").date(), 
-                                                    key=f"edit_date_{index}")
+                    
+                    # Gérer les dates correctement
+                    current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
+                    edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
+                    
                     edit_statut = st.selectbox("Statut", ["Fini", "Pas fini", "En cours", "Bloqué"], 
-                                             index=["Fini", "Pas fini", "En cours", "Bloqué"].index(task["Statut"]), 
+                                             index=["Fini", "Pas fini", "En cours", "Bloqué"].index(task["Statut"]) if task["Statut"] in ["Fini", "Pas fini", "En cours", "Bloqué"] else 1, 
                                              key=f"edit_statut_{index}")
                     
                     edit_confirme = st.checkbox("Confirmé ?", value=task["Confirmé"] == "Oui", key=f"edit_confirm_{index}")
@@ -314,16 +355,27 @@ if not filtered_df.empty:
                                 # Afficher un loader
                                 with st.spinner("Modification en cours..."):
                                     time.sleep(1)  # Simuler un traitement
-                                    df.at[index, "Tâche"] = edit_tache
-                                    df.at[index, "Responsable"] = edit_responsable
-                                    df.at[index, "Date limite"] = str(edit_date_limite)
-                                    df.at[index, "Statut"] = edit_statut
-                                    df.at[index, "Confirmé"] = "Oui" if edit_confirme else "Non"
-                                    save_data(df)
-                                    st.success("✅ Tâche mise à jour avec succès !")
-                                    st.session_state[f"edit_index_{index}"] = False
-                                    time.sleep(1)  # Petit délai pour voir le message
-                                    st.rerun()
+                                    
+                                    # Préparer les données pour Airtable
+                                    updated_task = {
+                                        "Tâche": edit_tache,
+                                        "Responsable": edit_responsable,
+                                        "Date limite": str(edit_date_limite),
+                                        "Statut": edit_statut,
+                                        "Confirmé": "Oui" if edit_confirme else "Non"
+                                    }
+                                    
+                                    # Mettre à jour dans Airtable
+                                    success, message = update_task(task['id'], updated_task)
+                                    
+                                    if success:
+                                        st.success("✅ " + message)
+                                        st.session_state[f"edit_index_{index}"] = False
+                                        st.cache_data.clear()  # Effacer le cache pour recharger les données
+                                        time.sleep(1)  # Petit délai pour voir le message
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ " + message)
                     with col2:
                         if st.form_submit_button("Annuler"):
                             st.session_state[f"edit_index_{index}"] = False
@@ -340,12 +392,18 @@ if not filtered_df.empty:
                         # Afficher un loader
                         with st.spinner("Suppression en cours..."):
                             time.sleep(1)  # Simuler un traitement
-                            df = df.drop(index)
-                            save_data(df)
-                            st.success("✅ Tâche supprimée avec succès !")
-                            st.session_state[f"delete_index_{index}"] = False
-                            time.sleep(1)  # Petit délai pour voir le message
-                            st.rerun()
+                            
+                            # Supprimer de Airtable
+                            success, message = delete_task(task['id'])
+                            
+                            if success:
+                                st.success("✅ " + message)
+                                st.session_state[f"delete_index_{index}"] = False
+                                st.cache_data.clear()  # Effacer le cache pour recharger les données
+                                time.sleep(1)  # Petit délai pour voir le message
+                                st.rerun()
+                            else:
+                                st.error("❌ " + message)
                 with col2:
                     if st.button("Annuler", key=f"cancel_delete_{index}"):
                         st.session_state[f"delete_index_{index}"] = False
@@ -376,6 +434,8 @@ with st.form("add_task", clear_on_submit=True):
             # Afficher un loader
             with st.spinner("Ajout en cours..."):
                 time.sleep(1)  # Simuler un traitement
+                
+                # Préparer les données pour Airtable
                 new_task = {
                     "Tâche": tache,
                     "Responsable": responsable,
@@ -383,8 +443,14 @@ with st.form("add_task", clear_on_submit=True):
                     "Statut": statut,
                     "Confirmé": "Oui" if confirme else "Non"
                 }
-                df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
-                save_data(df)
-                st.success("✅ Tâche ajoutée avec succès !")
-                time.sleep(1)  # Petit délai pour voir le message
-                st.rerun()
+                
+                # Créer dans Airtable
+                success, message = create_task(new_task)
+                
+                if success:
+                    st.success("✅ " + message)
+                    st.cache_data.clear()  # Effacer le cache pour recharger les données
+                    time.sleep(1)  # Petit délai pour voir le message
+                    st.rerun()
+                else:
+                    st.error("❌ " + message)
