@@ -305,6 +305,39 @@ st.markdown("""
     .urgent { border-left: 4px solid #DC2626; }
     .due-soon { border-left: 4px solid #F59E0B; }
     .on-track { border-left: 4px solid #10B981; }
+
+     /* Empêcher la coupure des mots */
+    .task-title, .task-detail, .status-a-faire, .status-en-cours, 
+    .status-en-revue, .status-approuve, .status-rejete, 
+    .status-termine, .status-archive {
+        white-space: nowrap;         /* Pas de retour auto */
+        overflow: hidden;            /* Cache ce qui dépasse */
+        text-overflow: ellipsis;     /* Ajoute "..." si trop long */
+    }
+
+    /* Adapter la largeur du contenu quand la sidebar est ouverte */
+    .block-container {
+        max-width: 100% !important;  /* Utiliser toute la largeur */
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    /* Permettre le scroll horizontal si trop serré */
+    .main, .block-container {
+        overflow-x: auto;
+    }
+
+    /* Pour les colonnes du Kanban : scroll horizontal sur petit écran */
+    @media (max-width: 1024px) {
+        .element-container:has(.stColumns) {
+            overflow-x: auto;
+            display: flex;
+            gap: 1rem;
+        }
+        .element-container:has(.stColumns) > div {
+            min-width: 250px; /* largeur mini de chaque colonne */
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
