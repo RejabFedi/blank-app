@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # --- URL du Google Sheet ---
-CSV_URL = "https://docs.google.com/spreadsheets/d/1CcWZjT94NIu3t1eOvNeaR8Zx7T3y_LOSyQeQWitqihA/edit?usp=drive_link"
+CSV_URL = "https://docs.google.com/spreadsheets/d/1CcWZjT94NIu3t1eOvNeaR8Zx7T3y_LOSyQeQWitqihA/edit?usp=sharing"
 
 # --- Charger les données depuis Google Sheets ---
 @st.cache_data(ttl=300)  # Cache pour 5 minutes
