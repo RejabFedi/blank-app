@@ -389,7 +389,8 @@ if not filtered_df.empty:
                     with st.expander(f"{task['Tâche']}"):
                         st.write(f"👤 Responsable : {task['Responsable']}")
                         if pd.notna(task["Date limite"]):
-                            st.write(f"📅 Échéance : {task['Date limite']} ({days_until_due} jours restants)")
+                            responsables_list = task["Responsable"].split(",") if isinstance(task["Responsable"], str) else task["Responsable"]
+                            st.write("👤 Responsable(s) : " + ", ".join([r.strip() for r in responsables_list]))
                         st.write(f"✅ Confirmé : {confirm_class}")
 
                         # Boutons d'action
@@ -440,7 +441,7 @@ if not filtered_df.empty:
                                                 time.sleep(1)
                                                 updated_task = {
                                                     "Tâche": edit_tache,
-                                                    "Responsable": edit_responsable,
+                                                    "Responsable": ", ".join(edit_responsable) if isinstance(edit_responsable, list) else edit_responsable,
                                                     "Date limite": str(edit_date_limite),
                                                     "Statut": edit_statut,
                                                     "Confirmé": "Oui" if edit_confirme else "Non"
