@@ -3,8 +3,8 @@ import pandas as pd
 import os
 from datetime import datetime
 import time
-
-CSV_FILE = "tasks.csv"
+import requests
+from io import StringIO
 
 # --- Configuration de la page ---
 st.set_page_config(
@@ -14,20 +14,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Charger ou initialiser le CSV ---
-@st.cache_data
+# --- URL du Google Sheet ---
+CSV_URL = "https://docs.google.com/spreadsheets/d/TON_ID_SHEET/export?format=csv"
+
+# --- Charger les données depuis Google Sheets ---
+@st.cache_data(ttl=300)  # Cache pour 5 minutes
 def load_data():
-    if os.path.exists(CSV_FILE):
-        df = pd.read_csv(CSV_FILE)
+    try:
+        response = requests.get(CSV_URL)
+        response.raise_for_status()  # Vérifie si la requête a réussi
+        
+        # Lire le CSV depuis la réponse
+        df = pd.read_csv(StringIO(response.text))
+        
         # Convertir la date limite en datetime pour le filtrage
         if 'Date limite' in df.columns:
             df['Date limite'] = pd.to_datetime(df['Date limite']).dt.date
+        
         return df
-    else:
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur de connexion au Google Sheet: {e}")
+        return pd.DataFrame(columns=["Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
+    except Exception as e:
+        st.error(f"Erreur lors du chargement des données: {e}")
         return pd.DataFrame(columns=["Tâche", "Responsable", "Date limite", "Statut", "Confirmé"])
 
+# --- Fonction pour sauvegarder les données (simulation) ---
+# Note: Dans une application réelle, vous devriez implémenter l'écriture sur Google Sheets
+# via l'API Google Sheets. Cette fonction est une simulation.
 def save_data(df):
-    df.to_csv(CSV_FILE, index=False)
+    st.warning("Fonction de sauvegarde simulée. Dans une application réelle, implémentez l'API Google Sheets.")
+    # Ici, vous devriez normalement utiliser l'API Google Sheets pour écrire les données
+    # Pour l'instant, on affiche juste un message
+    st.info("Les modifications ne sont pas sauvegardées de manière permanente dans cette démo.")
 
 # Charger les données
 df = load_data()
@@ -149,22 +168,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# JavaScript pour gérer les modals
-st.markdown("""
-<script>
-function openModal(modalId) {
-    document.getElementById(modalId).style.display = "block";
-}
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = "none";
-}
-</script>
-""", unsafe_allow_html=True)
-
 # --- Sidebar pour la navigation et les filtres ---
 with st.sidebar:
     st.markdown("<h1 style='text-align: center;'>ANCU</h1>", unsafe_allow_html=True)
     st.markdown("---")
+    
+    # Bouton pour actualiser les données
+    if st.button("🔄 Actualiser les données"):
+        st.cache_data.clear()
+        df = load_data()
+        st.rerun()
     
     # Filtres
     st.subheader("Filtres")
@@ -199,6 +212,9 @@ with st.sidebar:
 
 # --- Titre principal ---
 st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_allow_html=True)
+
+# Information sur la source des données
+st.info("📊 Données chargées depuis Google Sheets | Dernière actualisation: " + datetime.now().strftime("%H:%M:%S"))
 
 # --- Tableau des tâches avec filtres ---
 st.markdown('<h2 class="section-header">📋 Liste des tâches</h2>', unsafe_allow_html=True)
