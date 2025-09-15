@@ -345,48 +345,45 @@ st.markdown("""
 
 # --- Configuration Airtable dans la sidebar ---
 with st.sidebar:
-    st.markdown("<h1 style='text-align: center;'>ANCU</h1>", unsafe_allow_html=True)
+    # --- En-tête ---
+    st.markdown("<h1 style='text-align: center; color:#1E3A8A;'>🌐 ANCU</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:0.9rem; color:gray;'>Gestion des tâches</p>", unsafe_allow_html=True)
     st.markdown("---")
-    
-    st.subheader("Configuration Airtable")
-    
-    # Bouton pour actualiser les données
-    if st.button("🔄 Actualiser les données"):
-        st.cache_data.clear()
-        df = load_data()
-        st.rerun()
-    
-    # Filtres
-    st.subheader("Filtres")
-    all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
-    selected_responsible = st.selectbox("Responsable", all_responsibles)
-    
-    all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
-    selected_status = st.selectbox("Statut", all_statuses)
-    
-    # Filtre de date
-    st.subheader("Échéance")
-    date_filter = st.radio("Filtrer par date", ["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"])
-    
-    # Métriques
-    st.markdown("---")
-    st.subheader("Métriques")
-    if not df.empty:
-        total_tasks = len(df)
-        completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
-        confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Total tâches", total_tasks)
-        with col2:
-            completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-            st.metric("Taux complétion", f"{completion_rate}%")
-        
-        st.metric("Tâches confirmées", f"{confirmed_tasks}/{total_tasks}")
-    else:
-        st.info("Aucune tâche à afficher")
 
+    # --- Section Configuration ---
+    with st.expander("⚙️ Configuration Airtable", expanded=False):
+        if st.button("🔄 Actualiser les données"):
+            st.cache_data.clear()
+            df = load_data()
+            st.rerun()
+
+    # --- Section Filtres ---
+    with st.expander("🎯 Filtres", expanded=True):
+        all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
+        selected_responsible = st.selectbox("👤 Responsable", all_responsibles)
+
+        all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
+        selected_status = st.selectbox("📌 Statut", all_statuses)
+
+        date_filter = st.radio("📅 Échéance", ["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"])
+
+    # --- Section Métriques ---
+    with st.expander("📊 Statistiques", expanded=True):
+        if not df.empty:
+            total_tasks = len(df)
+            completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
+            confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("📌 Total tâches", total_tasks)
+            with col2:
+                completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+                st.metric("✅ Taux complétion", f"{completion_rate}%")
+
+            st.metric("🔒 Tâches confirmées", f"{confirmed_tasks}/{total_tasks}")
+        else:
+            st.info("Aucune tâche à afficher")
 # --- Titre principal ---
 st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_allow_html=True)
 
