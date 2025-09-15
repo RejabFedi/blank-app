@@ -51,7 +51,7 @@ def load_data():
             task = {
                 'id': record.get('id'),
                 'Tâche': fields.get('Tâche', ''),
-                'Responsable': fields.get('Responsable', ''),
+                'Responsable': ", ".join(fields.get('Responsable', [])) if isinstance(fields.get('Responsable', []), list) else fields.get('Responsable', ''),
                 'Date limite': fields.get('Date limite', ''),
                 'Statut': fields.get('Statut', ''),
                 'Confirmé': fields.get('Confirmé', 'Non')
