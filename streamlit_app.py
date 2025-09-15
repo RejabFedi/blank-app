@@ -444,7 +444,7 @@ if not filtered_df.empty:
                     st.session_state[f"delete_index_{index}"] = True
             st.markdown('</div>', unsafe_allow_html=True)
             
-             st.markdown('</div>', unsafe_allow_html=True)  # Fermer la grille
+            st.markdown('</div>', unsafe_allow_html=True)  # Fermer la grille
 else:
     st.info("Aucune tâche ne correspond aux filtres sélectionnés")
 
