@@ -357,33 +357,46 @@ with st.sidebar:
             df = load_data()
             st.rerun()
 
-    # --- Section Filtres ---
+    # --- Section Filtres (compact mode) ---
     with st.expander("🎯 Filtres", expanded=True):
+        # Responsable avec radio (compact)
         all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
-        selected_responsible = st.selectbox("👤 Responsable", all_responsibles)
+        selected_responsible = st.radio("👤 Responsable", all_responsibles, horizontal=False)
 
+        # Statut avec radio (compact)
         all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
-        selected_status = st.selectbox("📌 Statut", all_statuses)
+        selected_status = st.radio("📌 Statut", all_statuses, horizontal=False)
 
-        date_filter = st.radio("📅 Échéance", ["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"])
+        # Filtre de date avec select_slider (compact + visuel)
+        date_filter = st.select_slider("📅 Échéance", options=["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"], value="Toutes")
 
-    # --- Section Métriques ---
+    # --- Section Statistiques avec badges et progress bar ---
     with st.expander("📊 Statistiques", expanded=True):
         if not df.empty:
             total_tasks = len(df)
             completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
             confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("📌 Total tâches", total_tasks)
-            with col2:
-                completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-                st.metric("✅ Taux complétion", f"{completion_rate}%")
+            # --- Badges dynamiques ---
+            urgent_tasks = len(df[(df["Date limite"] < datetime.today().date()) & (df["Statut"] != "Terminé")])
+            due_soon_tasks = len(df[(df["Date limite"] >= datetime.today().date()) & 
+                                    (df["Date limite"] <= datetime.today().date() + pd.Timedelta(days=3)) & 
+                                    (df["Statut"] != "Terminé")])
 
+            st.markdown(f"🔴 **Urgentes** : {urgent_tasks}")
+            st.markdown(f"🟡 **À échéance proche** : {due_soon_tasks}")
+            st.markdown(f"🟢 **Terminées** : {completed_tasks}")
+
+            # --- Progress bar de complétion ---
+            completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+            st.progress(completion_rate / 100)
+            st.caption(f"Taux de complétion : {completion_rate}%")
+
+            # --- Autre info ---
             st.metric("🔒 Tâches confirmées", f"{confirmed_tasks}/{total_tasks}")
         else:
             st.info("Aucune tâche à afficher")
+
 # --- Titre principal ---
 st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_allow_html=True)
 
