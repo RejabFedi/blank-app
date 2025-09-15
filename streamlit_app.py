@@ -166,78 +166,73 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     .task-card {
-        padding: 1.2rem;
-        border-radius: 0.8rem;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        margin-bottom: 0;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         background-color: white;
-        position: relative;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-        height: 220px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        min-height: 220px;
     }
     .task-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
     .task-title {
         font-size: 1.1rem;
         font-weight: 600;
         margin-bottom: 0.8rem;
-        line-height: 1.3;
         color: #1E3A8A;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        line-height: 1.3;
     }
     .task-detail {
         font-size: 0.9rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
         display: flex;
         align-items: center;
     }
     .task-detail-icon {
         margin-right: 0.5rem;
         opacity: 0.7;
+        width: 20px;
+        text-align: center;
     }
     .task-status-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 0.8rem;
+        margin: 0.8rem 0;
     }
     .status-fini {
         background-color: #D1FAE5;
         color: #065F46;
-        padding: 0.3rem 0.6rem;
-        border-radius: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
         font-weight: 600;
         font-size: 0.8rem;
     }
     .status-pas-fini {
         background-color: #FEE2E2;
         color: #991B1B;
-        padding: 0.3rem 0.6rem;
-        border-radius: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
         font-weight: 600;
         font-size: 0.8rem;
     }
     .status-en-cours {
         background-color: #FEF3C7;
         color: #92400E;
-        padding: 0.3rem 0.6rem;
-        border-radius: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
         font-weight: 600;
         font-size: 0.8rem;
     }
     .status-bloque {
         background-color: #E5E7EB;
         color: #374151;
-        padding: 0.3rem 0.6rem;
-        border-radius: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
         font-weight: 600;
         font-size: 0.8rem;
     }
@@ -245,45 +240,17 @@ st.markdown("""
         color: #065F46;
         font-weight: 600;
         font-size: 0.8rem;
-        display: flex;
-        align-items: center;
     }
     .not-confirmed {
         color: #991B1B;
         font-weight: 600;
         font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-    }
-    .metric-card {
-        background-color: #F3F4F6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        text-align: center;
-    }
-    .stButton>button {
-        width: 100%;
-    }
-    .urgent {
-        border-left: 5px solid #DC2626;
-    }
-    .due-soon {
-        border-left: 5px solid #F59E0B;
-    }
-    .on-track {
-        border-left: 5px solid #10B981;
-    }
-    .action-buttons {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
     }
     .days-remaining {
         font-weight: 600;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         padding: 0.2rem 0.5rem;
-        border-radius: 0.8rem;
-        background-color: #F3F4F6;
+        border-radius: 0.5rem;
     }
     .days-remaining.urgent {
         background-color: #FEE2E2;
@@ -296,6 +263,26 @@ st.markdown("""
     .days-remaining.normal {
         background-color: #D1FAE5;
         color: #059669;
+    }
+    .task-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: auto;
+        padding-top: 0.8rem;
+    }
+    .task-actions button {
+        flex: 1;
+        padding: 0.4rem;
+        font-size: 0.8rem;
+    }
+    .urgent {
+        border-left: 4px solid #DC2626;
+    }
+    .due-soon {
+        border-left: 4px solid #F59E0B;
+    }
+    .on-track {
+        border-left: 4px solid #10B981;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -382,7 +369,7 @@ if not filtered_df.empty:
     st.markdown('<div class="tasks-grid">', unsafe_allow_html=True)
     
     for index, task in filtered_df.iterrows():
-        # Déterminer la classe CSS en fonction du statut et de la date
+        # Déterminer la classe CSS en fonction du statut
         status_class = ""
         if task["Statut"] == "Fini":
             status_class = "status-fini"
@@ -418,7 +405,7 @@ if not filtered_df.empty:
             # Titre de la tâche
             st.markdown(f'<div class="task-title">{task["Tâche"]}</div>', unsafe_allow_html=True)
             
-            # Détails de la tâche
+            # Responsable
             st.markdown(f'''
                 <div class="task-detail">
                     <span class="task-detail-icon">👤</span>
@@ -426,6 +413,7 @@ if not filtered_df.empty:
                 </div>
             ''', unsafe_allow_html=True)
             
+            # Date limite
             if "Date limite" in task and pd.notna(task["Date limite"]):
                 st.markdown(f'''
                     <div class="task-detail">
@@ -446,6 +434,7 @@ if not filtered_df.empty:
             st.markdown(f'<div class="task-detail"><span class="{confirm_class}">Confirmé: {task["Confirmé"]}</span></div>', unsafe_allow_html=True)
             
             # Boutons d'action
+            st.markdown('<div class="task-actions">', unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
                 if st.button(f"✏️ Modifier", key=f"edit_{index}"):
@@ -453,8 +442,12 @@ if not filtered_df.empty:
             with col2:
                 if st.button(f"🗑️ Supprimer", key=f"delete_{index}"):
                     st.session_state[f"delete_index_{index}"] = True
-            
             st.markdown('</div>', unsafe_allow_html=True)
+            
+             st.markdown('</div>', unsafe_allow_html=True)  # Fermer la grille
+else:
+    st.info("Aucune tâche ne correspond aux filtres sélectionnés")
+
             
             # Modal de modification
             if f"edit_index_{index}" in st.session_state and st.session_state[f"edit_index_{index}"]:
