@@ -407,9 +407,19 @@ if not filtered_df.empty:
                                 st.subheader("Modifier la tâche")
 
                                 edit_tache = st.text_input("Tâche", value=task["Tâche"], key=f"edit_tache_{index}")
-                                edit_responsable = st.selectbox("Responsable", ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
-                                    index=["Fedi", "Chayma", "Alaa", "Amen", "Wafa"].index(task["Responsable"]) if task["Responsable"] in ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"] else 0,
-                                    key=f"edit_responsable_{index}")
+                                # Convertir en liste si plusieurs responsables sont déjà enregistrés (séparés par des virgules)
+                                current_responsables = []
+                                if pd.notna(task["Responsable"]):
+                                    if isinstance(task["Responsable"], str):
+                                        current_responsables = [r.strip() for r in task["Responsable"].split(",")]
+                                    elif isinstance(task["Responsable"], list):
+                                        current_responsables = task["Responsable"]
+                              edit_responsable = st.multiselect(
+                                 "Responsable",
+                                 ["Fedi", "Chayma", "Alaa", "Amen", "Wafa"],
+                                 default=current_responsables,
+                                 key=f"edit_responsable_{index}"
+                                 )
 
                                 current_date = task["Date limite"] if "Date limite" in task and pd.notna(task["Date limite"]) else datetime.today().date()
                                 edit_date_limite = st.date_input("Date limite", value=current_date, key=f"edit_date_{index}")
