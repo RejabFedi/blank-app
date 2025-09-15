@@ -40,7 +40,7 @@ with st.form("add_task"):
         df = pd.concat([df, pd.DataFrame([new_task])], ignore_index=True)
         df.to_csv(CSV_FILE, index=False)
         st.success("✅ Tâche ajoutée avec succès !")
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Suppression / modification ---
 st.subheader("🗑️ Supprimer une tâche")
@@ -50,4 +50,4 @@ if not df.empty:
         df = df[df["Tâche"] != task_to_delete]
         df.to_csv(CSV_FILE, index=False)
         st.warning(f"Tâche '{task_to_delete}' supprimée.")
-        st.experimental_rerun()
+        st.rerun()
