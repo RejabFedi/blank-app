@@ -16,7 +16,7 @@ st.set_page_config(
 
 # --- Config Airtable ---
 # Ces informations doivent être remplacées par vos véritables identifiants Airtable
-AIRTABLE_API_KEY = st.secrets.get("AIRTABLE_API_KEY", "pat8pwKjxmpeyYdIC.604d953a70a71163b91705a912ace07690488ceda168af7fcf74724bd1273753")
+AIRTABLE_API_KEY = st.secrets.get("AIRTABLE_API_KEY", "pat8pwKjxmpeyYdIC.9a8317c49467707c02a82d913172f4f05b64c894ef0b1edf880fb06147263397")
 AIRTABLE_BASE_ID = st.secrets.get("AIRTABLE_BASE_ID", "appllTEXrUFuAaMaq")
 TABLE_NAME = "tasks"
 URL = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{TABLE_NAME}"
