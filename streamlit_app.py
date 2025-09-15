@@ -17,7 +17,7 @@ st.set_page_config(
 # --- Config Airtable ---
 TOKEN = "pat0PrTcwP3bmf8sB.121da827544076506db17fe13b4d104d12026bf4eb4f1fe828a63f466f25c0f0"
 BASE_ID = "appllTEXrUFuAaMaq"
-TABLE_NAME = "Tasks"
+TABLE_NAME = "tasks"
 URL = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}"
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
