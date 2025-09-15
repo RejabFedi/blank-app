@@ -338,132 +338,52 @@ st.markdown("""
             min-width: 250px; /* largeur mini de chaque colonne */
         }
     }
-
-    /* Styles pour le sidebar amélioré */
-    .sidebar-header {
-        text-align: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid #e1e4e8;
-        margin-bottom: 1rem;
-    }
-    .sidebar-section {
-        margin-bottom: 1.5rem;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-        background-color: #f8f9fa;
-    }
-    .sidebar-section-title {
-        font-weight: 600;
-        color: #1E3A8A;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .metric-card {
-        background-color: white;
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        margin-bottom: 0.5rem;
-    }
-    .metric-value {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #1E3A8A;
-    }
-    .metric-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-    .refresh-button {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar amélioré ---
-with st.sidebar:
-    # En-tête du sidebar
-    st.markdown('<div class="sidebar-header">', unsafe_allow_html=True)
-    st.markdown("## 📋 ANCU")
-    st.markdown("**Gestion des Tâches**")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Section: Actualisation des données
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-section-title">🔄 Synchronisation</div>', unsafe_allow_html=True)
-    
-    # Bouton pour actualiser les données
-    if st.button("🔄 Actualiser les données", use_container_width=True, key="refresh_button"):
-        st.cache_data.clear()
-        df = load_data()
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Section: Filtres
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-section-title">🔍 Filtres</div>', unsafe_allow_html=True)
-    
-    all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
-    selected_responsible = st.selectbox("**Responsable**", all_responsibles)
-    
-    all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
-    selected_status = st.selectbox("**Statut**", all_statuses)
-    
-    # Filtre de date
-    st.markdown("**Échéance**")
-    date_filter = st.radio(
-        "Filtrer par date",
-        ["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"],
-        label_visibility="collapsed"
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Section: Métriques
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-section-title">📊 Métriques</div>', unsafe_allow_html=True)
-    
-    if not df.empty:
-        total_tasks = len(df)
-        completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
-        confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
-        
-        # Cartes de métriques
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-value">{total_tasks}</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Total tâches</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col2:
-            completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-value">{completion_rate}%</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-label">Taux complétion</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.markdown(f'<div class="metric-value">{confirmed_tasks}/{total_tasks}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="metric-label">Tâches confirmées</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.info("Aucune tâche à afficher")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Pied de page du sidebar
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; font-size: 0.8rem; color: #6c757d;'>
-        Connecté à Airtable 📊
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
 
+
+# --- Configuration Airtable dans la sidebar ---
+with st.sidebar:
+    # --- En-tête ---
+    st.markdown("<h1 style='text-align: center; color:#1E3A8A;'>🌐 ANCU</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size:0.9rem; color:gray;'>Gestion des tâches</p>", unsafe_allow_html=True)
+    st.markdown("---")
+
+    # --- Section Configuration ---
+    with st.expander("⚙️ Configuration Airtable", expanded=False):
+        if st.button("🔄 Actualiser les données"):
+            st.cache_data.clear()
+            df = load_data()
+            st.rerun()
+
+    # --- Section Filtres ---
+    with st.expander("🎯 Filtres", expanded=True):
+        all_responsibles = ["Tous"] + sorted(df["Responsable"].unique().tolist()) if not df.empty and "Responsable" in df.columns else ["Tous"]
+        selected_responsible = st.selectbox("👤 Responsable", all_responsibles)
+
+        all_statuses = ["Tous"] + sorted(df["Statut"].unique().tolist()) if not df.empty and "Statut" in df.columns else ["Tous"]
+        selected_status = st.selectbox("📌 Statut", all_statuses)
+
+        date_filter = st.radio("📅 Échéance", ["Toutes", "Cette semaine", "Cette quinzaine", "Ce mois"])
+
+    # --- Section Métriques ---
+    with st.expander("📊 Statistiques", expanded=True):
+        if not df.empty:
+            total_tasks = len(df)
+            completed_tasks = len(df[df["Statut"] == "Terminé"]) if "Statut" in df.columns else 0
+            confirmed_tasks = len(df[df["Confirmé"] == "Oui"]) if "Confirmé" in df.columns else 0
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("📌 Total tâches", total_tasks)
+            with col2:
+                completion_rate = int((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+                st.metric("✅ Taux complétion", f"{completion_rate}%")
+
+            st.metric("🔒 Tâches confirmées", f"{confirmed_tasks}/{total_tasks}")
+        else:
+            st.info("Aucune tâche à afficher")
 # --- Titre principal ---
 st.markdown('<h1 class="main-header">✅ Gestion des Tâches ANCU</h1>', unsafe_allow_html=True)
 
