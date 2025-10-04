@@ -1,19 +1,41 @@
-# 🎈 Blank app template
+🌐 ANCU – Gestion des Tâches
 
-A simple Streamlit app template for you to modify!
+Un outil simple de gestion des tâches pour l’Association Nationale des Clubs Universitaires (ANCU), utilisant un tableau Kanban et des données chargées depuis Airtable.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+⚙️ Fonctionnalités
 
-### How to run it on your own machine
+📊 Synchronisation des données avec Airtable
 
-1. Install the requirements
+🏷️ Organisation des tâches en colonnes Kanban :
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+À faire
 
-2. Run the app
+En cours
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+En revue
+
+Approuvé
+
+Rejeté
+
+Terminé
+
+Archivé
+
+🎯 Filtres par statut, priorité et responsable
+
+✅ Suivi de l’avancement et statistiques globales
+
+📦 Installation
+
+Clonez le projet
+
+Installez les dépendances
+
+Configurez la connexion à Airtable
+
+Lancez l’application
+
+📜 Licence
+
+Projet développé dans le cadre de l’ANCU.
