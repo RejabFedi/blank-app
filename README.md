@@ -9,12 +9,6 @@ Un outil simple de gestion des tâches pour l'ANCU, basé sur un tableau Kanban 
 - 🔍 **Filtres avancés** par statut, priorité et responsable
 - 📊 **Suivi de l'avancement** et statistiques détaillées
 
-## 📊 Aperçu du Kanban
-┌──────────────┬──────────────┬──────────────┬──────────────┐
-│ À faire │ En cours │ Revue │ Terminé │
-├──────────────┼──────────────┼──────────────┼──────────────┤
-│ (vide) │ (vide) │ (vide) │ (vide) │
-└──────────────┴──────────────┴──────────────┴──────────────┘
 
 
 ## 🚀 Installation
