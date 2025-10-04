@@ -11,9 +11,9 @@ Un outil simple de gestion des tâches pour l'ANCU, basé sur un tableau Kanban 
 
 ## 📊 Aperçu du Kanban
 ┌──────────────┬──────────────┬──────────────┬──────────────┐
-│ À faire      │     En cours │        Revue │      Terminé │
+│ À faire │ En cours │ Revue │ Terminé │
 ├──────────────┼──────────────┼──────────────┼──────────────┤
-│ (vide)       │       (vide) │       (vide) │       (vide) │
+│ (vide) │ (vide) │ (vide) │ (vide) │
 └──────────────┴──────────────┴──────────────┴──────────────┘
 
 
@@ -22,6 +22,8 @@ Un outil simple de gestion des tâches pour l'ANCU, basé sur un tableau Kanban 
 ### Prérequis
 - Node.js / Python / Flutter (selon la version)
 - Compte Airtable avec accès API
+
+
 
 ### Étapes d'installation
 
@@ -42,13 +44,14 @@ npm install   # ou pip install -r requirements.txt / flutter pub get
 npm start     # ou python main.py / flutter run
 ```
 
+
+
 📖 Utilisation
+
+
 Configurez votre connexion Airtable dans les paramètres
-
 Créez vos premières tâches
-
 Utilisez le drag & drop pour déplacer les tâches entre les colonnes
-
 Filtrez les tâches selon vos besoins
 
 
