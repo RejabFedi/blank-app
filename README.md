@@ -14,7 +14,7 @@ Un outil simple de gestion des tâches pour l'ANCU, basé sur un tableau Kanban 
 ## 🚀 Installation
 
 ### Prérequis
-- Node.js / Python / Flutter (selon la version)
+- Node.js / Python 
 - Compte Airtable avec accès API
 
 
